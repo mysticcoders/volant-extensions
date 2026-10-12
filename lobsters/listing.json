@@ -1,0 +1,6 @@
+{
+  "summary": "Hottest, newest or one tag's stories from Lobsters.",
+  "publisher": "Mystic Coders",
+  "license": "MIT",
+  "notes": "Reads Lobsters' public JSON feeds. Return opens a story; Command-Return opens its discussion."
+}

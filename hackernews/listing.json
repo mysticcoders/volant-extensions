@@ -1,0 +1,6 @@
+{
+  "summary": "Front page, newest, Ask HN, Show HN and search results from Hacker News.",
+  "publisher": "Mystic Coders",
+  "license": "MIT",
+  "notes": "Reads the public Algolia Hacker News API. Return opens a story; Command-Return opens its discussion."
+}
