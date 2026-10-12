@@ -1,0 +1,14 @@
+{
+  "abiVersion": 1,
+  "id": "community.volant.lobsters",
+  "name": "Lobsters",
+  "version": "0.1.0",
+  "module": "lobsters.wasm",
+  "capabilities": [],
+  "hosts": [
+    "lobste.rs"
+  ],
+  "output": "items",
+  "timeoutSeconds": 2,
+  "sha256": "8d876a07aa5e3b6f6ad96c578496e400b6397f6f63268d04a865fbf9b688567c"
+}
