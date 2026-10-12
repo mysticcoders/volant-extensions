@@ -1,0 +1,14 @@
+{
+  "abiVersion": 2,
+  "id": "community.volant.npm",
+  "name": "npm",
+  "version": "0.1.0",
+  "module": "npm.wasm",
+  "capabilities": [],
+  "hosts": [
+    "registry.npmjs.org"
+  ],
+  "output": "items",
+  "timeoutSeconds": 2,
+  "sha256": "66b1234f00bee9c90c10d97cb616ac279b4b939627d1debbf221bce2ffc93fb3"
+}

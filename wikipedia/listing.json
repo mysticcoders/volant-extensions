@@ -1,0 +1,6 @@
+{
+  "summary": "Search English Wikipedia and open an article.",
+  "publisher": "Mystic Coders",
+  "license": "MIT",
+  "notes": "Written in Python and run on MicroPython 1.29.0 (MIT license), compiled to WebAssembly with wasi-sdk. Reads the public Wikipedia search API on en.wikipedia.org. Return opens the article."
+}

@@ -3,12 +3,14 @@
 Extensions for [Volant](https://usevolant.com), the macOS launcher. Each folder is one extension: a
 `manifest.json` and a WebAssembly module, ready to install.
 
-| Extension | Launcher keyword | Reads | What it shows |
-|---|---|---|---|
-| [Hacker News](hackernews) | `hn`, `hn new`, `hn ask`, `hn show`, `hn <search>` | `hn.algolia.com` | Front page, newest, Ask HN, Show HN or search results |
-| [Lobsters](lobsters) | `lobsters`, `lobsters new`, `lobsters <tag>` | `lobste.rs` | Hottest, newest or one tag |
+| Extension | Language | Launcher keyword | Reads | What it shows |
+|---|---|---|---|---|
+| [Hacker News](hackernews) | Rust | `hn`, `hn new`, `hn ask`, `hn show`, `hn <search>` | `hn.algolia.com` | Front page, newest, Ask HN, Show HN or search results |
+| [Lobsters](lobsters) | Rust | `lobsters`, `lobsters new`, `lobsters <tag>` | `lobste.rs` | Hottest, newest or one tag |
+| [npm](npm) | TypeScript | `npm <search>` | `registry.npmjs.org` | Packages matching a name or keyword |
+| [Wikipedia](wikipedia) | Python | `wiki <search>` | `en.wikipedia.org` | English Wikipedia articles matching a topic |
 
-Return opens a story; Command-Return opens its discussion in your browser.
+Return opens a story or package; Command-Return opens its discussion, homepage or repository in your browser.
 
 ## Install
 
@@ -27,8 +29,9 @@ Uninstalling an extension there also removes hosts no other extension needs.
 
 ## How these extensions work
 
-They are list extensions for Volant's ABI 1 and never touch the network themselves. Volant runs the
-module twice:
+They are list extensions and never touch the network themselves. The Rust ones use Volant's ABI 1
+(`alloc` and `run` exports); the others use ABI 2, a restricted WASI command that reads the request
+on stdin and writes its reply to stdout. Either way, Volant runs the module twice:
 
 1. **Plan:** the module receives `{"phase":"plan","query":"…","now":…}` and returns
    `{"fetch":["https://…"]}`. Volant fetches each URL only if it is https and its host is listed in the
@@ -42,14 +45,34 @@ memory. See Volant's [network extensions](https://github.com/mysticcoders/volant
 documentation for the full contract.
 
 [`kit/`](kit) is a small Rust crate with the ABI glue (`volant_extension!`), the request and reply
-types, and helpers for ages, domains, query encoding and RFC 3339 timestamps.
+types, and helpers for ages, domains, query encoding, RFC 3339 timestamps and checking planned URLs
+against the manifest's hosts. [`npm/src/kit.ts`](npm/src/kit.ts) is its TypeScript counterpart.
+Every extension has a test that each URL it plans is https on a host its manifest declares, so the
+source cannot drift from what the owner approves.
 
 ## Build
 
 ```sh
-./build.sh          # cargo test, build every module, pin each sha256 in its manifest
-./build.sh --check  # test and build, and fail if a manifest's sha256 does not match its module (CI)
+./build.sh          # test and build every module, pin each sha256 in its manifest
+./build.sh --check  # test and build Rust, test the rest, and check every committed module (CI)
 ```
+
+Rust extensions are members of the Cargo workspace. Any other folder with a `manifest.json` builds
+itself with its own `build.sh`, which takes the same `--check` flag. After building,
+`tools/check-module.py` checks every module the way Volant will: its sha256, at most 2 MiB, one memory
+with a maximum of at most 16 MiB, and only the imports and exports its ABI allows.
+`tools/volant-host.sh MODULE ABI < request.json` runs a module once in Volant's production
+JavaScriptCore host, from a Volant checkout beside this repository, and prints its reply.
+
+The TypeScript extension is bundled with esbuild and compiled with [Javy](https://github.com/bytecodealliance/javy)
+9.1.0, which embeds the QuickJS engine; `npm/build.sh` downloads Javy and checks its SHA-256 first.
+It needs Node 24. Javy does not produce identical bytes on every build, so CI checks only the
+committed module and its hash, not a rebuild.
+
+The Python extension runs on [MicroPython](https://micropython.org) 1.29.0, compiled with
+[wasi-sdk](https://github.com/WebAssembly/wasi-sdk) 34; `wikipedia/build.sh` downloads both and checks
+their SHA-256 first. Its tests run under plain CPython, so `--check` needs only `python3`. See
+[`wikipedia/README.md`](wikipedia/README.md) for how the runtime is built and its limits.
 
 The toolchain is pinned in `rust-toolchain.toml` (with the `wasm32-unknown-unknown` target), so
 rebuilds on the same machine produce the same bytes; Linux and macOS builds can differ in function

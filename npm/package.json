@@ -1,0 +1,13 @@
+{
+  "name": "volant-npm",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "tsc --noEmit && node --test --test-reporter=dot src/*.test.ts",
+    "build": "node build.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.10",
+    "typescript": "5.9.3"
+  }
+}
