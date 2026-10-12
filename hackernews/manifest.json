@@ -2,7 +2,7 @@
   "abiVersion": 1,
   "id": "community.volant.hn",
   "name": "Hacker News",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "module": "hackernews.wasm",
   "capabilities": [],
   "hosts": [
@@ -10,5 +10,5 @@
   ],
   "output": "items",
   "timeoutSeconds": 2,
-  "sha256": "76fe6b6e73058d4a4e0ba4dc030d2328a51cd1a269c166cb063afa5b491b783e"
+  "sha256": "a6c7e3d638075f8ef3ad7dc27b86d2f9fc7b6efea677a9a9bc99fdf7bdc3a693"
 }
