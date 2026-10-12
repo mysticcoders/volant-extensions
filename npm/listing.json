@@ -2,5 +2,5 @@
   "summary": "Search npm packages by name, keyword or description.",
   "publisher": "Mystic Coders",
   "license": "MIT",
-  "notes": "Written in TypeScript and compiled with Javy, which embeds QuickJS-ng 0.15.0 (MIT, see QUICKJS-LICENSE). Reads the public npm registry search API. Return opens the package on npmjs.com; Command-Return opens its homepage or repository."
+  "notes": "Written in TypeScript and compiled with Javy 9.1.0 (Apache-2.0 WITH LLVM-exception, see JAVY-LICENSE), which embeds rquickjs 0.12.0 (MIT, see RQUICKJS-LICENSE) and QuickJS-ng 0.15.0 (MIT, see QUICKJS-LICENSE). Reads the public npm registry search API. Return opens the package on npmjs.com; Command-Return opens its homepage or repository."
 }
