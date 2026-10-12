@@ -12,6 +12,12 @@ Return opens a story; Command-Return opens its discussion in your browser.
 
 ## Install
 
+In Volant versions with the extension catalog, open Settings → Extensions, turn on **Allow Community
+Extensions**, choose **Check Catalog**, then **Install**. Type the extension's keyword in the launcher;
+the first run lists the hosts it needs, and **Allow and Run** enables it.
+
+To install by hand instead:
+
 1. In Volant, open Settings → Extensions, turn on **Allow Community Extensions**, and choose **Open Folder**.
 2. Copy an extension's folder (for example `hackernews/`, with its `manifest.json` and `.wasm`) into that folder, then choose **Refresh**.
 3. Type its keyword in the launcher. The first run lists the hosts it needs; **Allow and Run** enables it.
@@ -49,6 +55,22 @@ The toolchain is pinned in `rust-toolchain.toml` (with the `wasm32-unknown-unkno
 rebuilds on the same machine produce the same bytes; Linux and macOS builds can differ in function
 order. Build paths are remapped, so no machine path or username ends up in a module. The script runs cargo through rustup, so a Homebrew cargo earlier
 on your `PATH` does not get in the way.
+
+## Catalog
+
+Every push to `main` runs `.github/workflows/catalog.yml`: it tests and checks the modules, builds the
+site with `tools/catalog.py` (every folder with a `listing.json` is listed), signs the exact bytes of
+`catalog.json` with Ed25519 using the `CATALOG_SIGNING_KEY` secret, and publishes the site to
+<https://mysticcoders.github.io/volant-extensions/>. Volant holds the public key, refuses a catalog
+whose signature fails or whose `sequence` (the commit count of `main`) is older than one it accepted,
+and checks every downloaded file against the sizes and SHA-256 hashes in the signed index.
+
+Merging to `main` publishes, so review an extension's source, hosts and license before merging it.
+To add one, give its folder a `listing.json`:
+
+```json
+{ "summary": "One sentence.", "publisher": "Your name", "license": "MIT", "notes": "Optional detail." }
+```
 
 ## License
 
