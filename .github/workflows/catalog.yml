@@ -15,6 +15,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
       - name: Install the pinned toolchain
         run: rustup toolchain install 1.89.0 --profile minimal --target wasm32-unknown-unknown
       - name: Test, build and check committed modules

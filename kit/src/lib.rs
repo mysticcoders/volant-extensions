@@ -6,6 +6,18 @@
 //! from hosts the owner approved. Declare the entry point with [`volant_extension!`].
 use serde::{Deserialize, Serialize};
 
+/// The label Volant shows for a row's secondary link when it opens a story's discussion.
+pub const DISCUSSION_TITLE: &str = "Open Comments";
+const HTTPS: &str = "https://";
+const HTTP: &str = "http://";
+const PLAN: &str = "plan";
+const JUST_NOW: &str = "just now";
+const MINUTE: i64 = 60;
+const HOUR: i64 = 60 * MINUTE;
+const DAY: i64 = 24 * HOUR;
+const YEAR: i64 = 365 * DAY;
+const AGE_UNITS: [(i64, &str); 4] = [(YEAR, "y"), (DAY, "d"), (HOUR, "h"), (MINUTE, "m")];
+
 #[derive(Deserialize)]
 pub struct Request {
     pub phase: String,
@@ -14,6 +26,13 @@ pub struct Request {
     pub now: i64,
     #[serde(default)]
     pub responses: Vec<Response>,
+}
+
+impl Request {
+    /// Whether this is the plan phase, which returns URLs to fetch rather than rows.
+    pub fn is_plan(&self) -> bool {
+        self.phase == PLAN
+    }
 }
 
 #[derive(Deserialize)]
@@ -85,20 +104,32 @@ macro_rules! volant_extension {
     };
 }
 
-/// "5m ago", "3h ago", "2d ago" between two Unix times.
+/// "5m ago", "3h ago", "2d ago", "4y ago" between two Unix times.
 pub fn age(now: i64, then: i64) -> String {
     let seconds = (now - then).max(0);
-    match seconds {
-        0..=59 => "just now".to_string(),
-        60..=3_599 => format!("{}m ago", seconds / 60),
-        3_600..=86_399 => format!("{}h ago", seconds / 3_600),
-        _ => format!("{}d ago", seconds / 86_400),
-    }
+    AGE_UNITS.iter().find(|(size, _)| seconds >= *size)
+        .map_or_else(|| JUST_NOW.to_string(), |(size, unit)| format!("{}{unit} ago", seconds / size))
+}
+
+/// Whether a link is http or https, the only kinds Volant lets a row open.
+pub fn is_web_link(url: &str) -> bool {
+    url.starts_with(HTTPS) || url.starts_with(HTTP)
+}
+
+/// Whether Volant would fetch a planned URL for this manifest: https on the default port, no
+/// credentials or fragment, and a host the manifest's `hosts` declares. Extensions call it from tests
+/// so a URL in the source cannot drift from the hosts the owner approves.
+pub fn manifest_permits(manifest: &str, url: &str) -> bool {
+    let Ok(manifest) = serde_json::from_str::<serde_json::Value>(manifest) else { return false };
+    let Some(rest) = url.strip_prefix(HTTPS) else { return false };
+    let authority = rest.split(['/', '?', '#']).next().unwrap_or_default();
+    if url.contains('#') || authority.contains(['@', ':']) || authority.is_empty() { return false; }
+    manifest["hosts"].as_array().is_some_and(|hosts| hosts.iter().any(|host| host.as_str() == Some(authority)))
 }
 
 /// The host of an http or https URL without a leading "www.", for showing where a link goes.
 pub fn domain(url: &str) -> Option<String> {
-    let rest = url.strip_prefix("https://").or_else(|| url.strip_prefix("http://"))?;
+    let rest = url.strip_prefix(HTTPS).or_else(|| url.strip_prefix(HTTP))?;
     let host = rest.split(['/', '?', '#']).next()?.split('@').last()?.split(':').next()?;
     if host.is_empty() { return None; }
     Some(host.trim_start_matches("www.").to_lowercase())
@@ -143,6 +174,7 @@ mod tests {
         assert_eq!(age(10_000, 10_000 - 300), "5m ago");
         assert_eq!(age(100_000, 100_000 - 7_200), "2h ago");
         assert_eq!(age(1_000_000, 1_000_000 - 3 * 86_400), "3d ago");
+        assert_eq!(age(1_000_000_000, 1_000_000_000 - 1_942 * 86_400), "5y ago");
     }
 
     #[test]
@@ -158,6 +190,17 @@ mod tests {
         assert_eq!(parse_rfc3339("2026-10-11T20:18:09.541-05:00"), Some(1_791_767_889));
         assert_eq!(parse_rfc3339("2000-03-01T00:00:00+01:00"), Some(951_865_200));
         assert_eq!(parse_rfc3339("garbage"), None);
+    }
+
+    #[test]
+    fn manifests_permit_only_their_https_hosts() {
+        let manifest = r#"{"hosts":["example.com"]}"#;
+        assert!(manifest_permits(manifest, "https://example.com/a?b=c"));
+        assert!(!manifest_permits(manifest, "http://example.com/a"));
+        assert!(!manifest_permits(manifest, "https://example.com:8443/a"));
+        assert!(!manifest_permits(manifest, "https://user@example.com/a"));
+        assert!(!manifest_permits(manifest, "https://example.com/a#b"));
+        assert!(!manifest_permits(manifest, "https://other.example.com/a"));
     }
 
     #[test]
