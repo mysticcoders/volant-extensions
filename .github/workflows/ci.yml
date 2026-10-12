@@ -14,9 +14,3 @@ jobs:
         run: rustup toolchain install 1.89.0 --profile minimal --target wasm32-unknown-unknown
       - name: Test, build and check committed modules
         run: ./build.sh --check
-      - name: Keep the modules this run built
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: built-modules
-          path: target/wasm32-unknown-unknown/release/*.wasm

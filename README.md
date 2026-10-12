@@ -42,11 +42,12 @@ types, and helpers for ages, domains, query encoding and RFC 3339 timestamps.
 
 ```sh
 ./build.sh          # cargo test, build every module, pin each sha256 in its manifest
-./build.sh --check  # fail if a committed module or hash is out of date (CI runs this)
+./build.sh --check  # test and build, and fail if a manifest's sha256 does not match its module (CI)
 ```
 
-The toolchain is pinned in `rust-toolchain.toml` (with the `wasm32-unknown-unknown` target) so
-rebuilds produce the same bytes. The script runs cargo through rustup, so a Homebrew cargo earlier
+The toolchain is pinned in `rust-toolchain.toml` (with the `wasm32-unknown-unknown` target), so
+rebuilds on the same machine produce the same bytes; Linux and macOS builds can differ in function
+order. Build paths are remapped, so no machine path or username ends up in a module. The script runs cargo through rustup, so a Homebrew cargo earlier
 on your `PATH` does not get in the way.
 
 ## License

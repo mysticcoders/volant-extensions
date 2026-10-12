@@ -1,7 +1,9 @@
 #!/bin/bash
 # Tests and builds every extension for Volant's ABI 1 (wasm32-unknown-unknown, 16 MiB memory maximum)
-# and pins each module's SHA-256 in its manifest. The toolchain is pinned in rust-toolchain.toml so a
-# rebuild produces the same bytes; `./build.sh --check` fails if a committed module or hash is stale.
+# and pins each module's SHA-256 in its manifest. `./build.sh --check` (run by CI) tests and builds
+# without touching the committed modules, and fails if a manifest's sha256 does not match its module.
+# The pinned toolchain gives identical bytes on the same machine; Linux and macOS builds can differ in
+# function order, so CI does not compare bytes across hosts.
 #
 # Usage: ./build.sh [--check]
 set -euo pipefail
@@ -17,11 +19,7 @@ for manifest in */manifest.json; do
   folder=$(dirname "$manifest")
   module=$(python3 -c "import json,sys; print(json.load(open(sys.argv[1]))['module'])" "$manifest")
   built="target/wasm32-unknown-unknown/release/volant_$folder.wasm"
-  if [ "${1:-}" = --check ]; then
-    cmp -s "$built" "$folder/$module" || { echo "$folder/$module is stale; run ./build.sh and commit it"; exit 1; }
-  else
-    cp "$built" "$folder/$module"
-  fi
+  [ "${1:-}" = --check ] || cp "$built" "$folder/$module"
   python3 - "$manifest" "$folder/$module" "${1:-}" <<'PY'
 import hashlib, json, pathlib, sys
 manifest, module, mode = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2]), sys.argv[3]
