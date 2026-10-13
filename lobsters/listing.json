@@ -2,5 +2,5 @@
   "summary": "Hottest, newest or one tag's stories from Lobsters.",
   "publisher": "Mystic Coders",
   "license": "MIT",
-  "notes": "Reads Lobsters' public JSON feeds. Return opens a story; Command-Return opens its discussion."
+  "notes": "Reads Lobsters' public JSON feeds. Return opens a story; Command-Return opens its discussion. Pin or hide stories, or hide a whole domain, from a story's Actions (Command-K); opened stories show as read. That list is saved only on this Mac."
 }

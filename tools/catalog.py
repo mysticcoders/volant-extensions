@@ -72,6 +72,7 @@ def main(out):
             "capabilities": manifest.get("capabilities", []), "hosts": manifest.get("hosts", []),
             "source": f"{REPOSITORY}/tree/{revision}/{folder.name}",
             "manifest": entry(manifest_bytes), "moduleFile": entry(module_bytes), **icon_fields,
+            **({"storage": True} if manifest.get("storage") is True else {}),
         })
     if len({item["id"] for item in listings}) != len(listings):
         sys.exit("duplicate extension IDs")
