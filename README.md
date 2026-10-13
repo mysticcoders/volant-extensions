@@ -65,7 +65,9 @@ with a maximum of at most 16 MiB, and only the imports and exports its ABI allow
 JavaScriptCore host, from a Volant checkout beside this repository, and prints its reply.
 
 The TypeScript extension is bundled with esbuild and compiled with [Javy](https://github.com/bytecodealliance/javy)
-9.1.0, which embeds the QuickJS-ng 0.15.0 engine (MIT, in [`npm/QUICKJS-LICENSE`](npm/QUICKJS-LICENSE));
+9.1.0, which embeds the QuickJS-ng 0.15.0 engine through rquickjs 0.12.0. The module carries code from
+all three, so `npm/` includes their licenses: [`JAVY-LICENSE`](npm/JAVY-LICENSE) (Apache-2.0 WITH
+LLVM-exception), [`RQUICKJS-LICENSE`](npm/RQUICKJS-LICENSE) and [`QUICKJS-LICENSE`](npm/QUICKJS-LICENSE) (both MIT).
 `npm/build.sh` downloads Javy and checks its SHA-256 first.
 It needs Node 24. Javy does not produce identical bytes on every build, so CI checks only the
 committed module and its hash, not a rebuild.
