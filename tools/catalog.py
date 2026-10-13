@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Builds the Volant extension catalog site from every folder holding manifest.json and listing.json.
 
-The site has catalog.json, the index Volant reads, and packages/<id>/<version>/ with each manifest and
-module. CI signs the exact bytes of catalog.json with Ed25519 into catalog.json.sig (base64) and
-publishes the site to GitHub Pages. Volant derives package paths from the ID, version and module name
-rather than trusting paths in the index, and checks every byte against the sizes and hashes listed here.
+The site has catalog.json, the index Volant reads, and packages/<id>/<version>/ with each manifest,
+module and optional WebP icon. CI signs the exact bytes of catalog.json with Ed25519 into
+catalog.json.sig (base64) and publishes the site to GitHub Pages. Volant derives package paths from the
+ID, version and file names rather than trusting paths in the index, and checks every byte against the
+sizes and hashes listed here. Volant 0.3.0 ignores the icon fields and downloads only the other two files.
 
 Usage: tools/catalog.py OUT_DIR
 """
@@ -20,6 +21,8 @@ REPOSITORY = "https://github.com/mysticcoders/volant-extensions"
 ID = re.compile(r"^[a-z0-9-]+(\.[a-z0-9-]+)+$")
 VERSION = re.compile(r"^[0-9A-Za-z.+-]{1,32}$")
 MODULE = re.compile(r"^[A-Za-z0-9_-]{1,64}\.wasm$")
+ICON = re.compile(r"^[A-Za-z0-9_-]{1,64}\.webp$")
+MAX_ICON_BYTES = 32768
 
 
 def git(*args):
@@ -52,13 +55,23 @@ def main(out):
         package.mkdir(parents=True)
         (package / "manifest.json").write_bytes(manifest_bytes)
         (package / module).write_bytes(module_bytes)
+        icon = manifest.get("icon")
+        icon_fields = {}
+        if icon:
+            icon_bytes = (folder / icon).read_bytes()
+            if not ICON.match(icon) or len(icon_bytes) > MAX_ICON_BYTES or icon_bytes[:4] != b"RIFF" or icon_bytes[8:12] != b"WEBP":
+                sys.exit(f"{folder.name}: the icon must be a WebP of at most 32 KB with a catalog-safe name")
+            if hashlib.sha256(icon_bytes).hexdigest() != manifest.get("iconSha256"):
+                sys.exit(f"{folder.name}: manifest iconSha256 does not match {icon}")
+            (package / icon).write_bytes(icon_bytes)
+            icon_fields = {"icon": icon, "iconFile": entry(icon_bytes)}
         listings.append({
             "id": ident, "name": manifest["name"], "version": version, "module": module,
             "summary": listing["summary"], "publisher": listing["publisher"], "license": listing["license"],
             "notes": listing.get("notes"), "abiVersion": manifest.get("abiVersion", 1),
             "capabilities": manifest.get("capabilities", []), "hosts": manifest.get("hosts", []),
             "source": f"{REPOSITORY}/tree/{revision}/{folder.name}",
-            "manifest": entry(manifest_bytes), "moduleFile": entry(module_bytes),
+            "manifest": entry(manifest_bytes), "moduleFile": entry(module_bytes), **icon_fields,
         })
     if len({item["id"] for item in listings}) != len(listings):
         sys.exit("duplicate extension IDs")

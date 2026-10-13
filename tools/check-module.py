@@ -5,11 +5,12 @@ The module must match the manifest's sha256 and be at most 2 MiB, with one non-s
 whose explicit maximum is at most 16 MiB. ABI 1 modules export `memory`, `alloc` and `run` and may
 import only the `vey` functions their capabilities grant; ABI 2 modules export `memory` and `_start`
 and may import only Volant's restricted set of WASI preview 1 functions. Volant checks all of this
-again at run time; this script catches a bad module before it is committed or published.
+again at run time; this script catches a bad module before it is committed or published. An optional
+`icon` must be a square-named `.webp` of at most 32 KB beside the manifest, pinned by `iconSha256`.
 
 Usage:
   tools/check-module.py MANIFEST              check the module and print a summary
-  tools/check-module.py --pin MANIFEST        write the module's sha256 into the manifest
+  tools/check-module.py --pin MANIFEST        write the module's and icon's sha256 into the manifest
   tools/check-module.py --module-name MANIFEST print the manifest's module file name
 """
 import hashlib
@@ -31,6 +32,7 @@ WASI_IMPORTS = {
     "environ_sizes_get", "environ_get", "clock_time_get", "proc_exit",
 }
 ABI2_EXPORTS = {"memory", "_start"}
+MAX_ICON_BYTES = 32768
 
 
 class Reader:
@@ -111,6 +113,25 @@ def inspect(data):
     return imports, exports, memories
 
 
+def icon_problems(manifest, folder):
+    """Every way the optional icon breaks Volant's rules, as sentences."""
+    icon = manifest.get("icon")
+    if icon is None:
+        return [] if "iconSha256" not in manifest else ["iconSha256 is set without an icon"]
+    stem = icon[:-5]
+    if not icon.endswith(".webp") or not 1 <= len(stem) <= 64 or not all(c.isascii() and (c.isalnum() or c in "_-") for c in stem):
+        return [f"icon {icon!r} must be a plain .webp file name"]
+    data = (folder / icon).read_bytes()
+    found = []
+    if len(data) > MAX_ICON_BYTES:
+        found.append(f"icon is {len(data)} bytes, over the {MAX_ICON_BYTES}-byte limit")
+    if data[:4] != b"RIFF" or data[8:12] != b"WEBP":
+        found.append("icon is not a WebP file")
+    if hashlib.sha256(data).hexdigest() != manifest.get("iconSha256"):
+        found.append("manifest iconSha256 does not match the icon; run ./build.sh and commit it")
+    return found
+
+
 def problems(manifest, data):
     """Every way the module breaks the manifest or Volant's rules, as sentences."""
     found = []
@@ -155,9 +176,11 @@ def main(arguments):
     data = module_path.read_bytes()
     if flag == "--pin":
         manifest["sha256"] = hashlib.sha256(data).hexdigest()
+        if manifest.get("icon"):
+            manifest["iconSha256"] = hashlib.sha256((manifest_path.parent / manifest["icon"]).read_bytes()).hexdigest()
         manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
         return
-    found = problems(manifest, data)
+    found = problems(manifest, data) + icon_problems(manifest, manifest_path.parent)
     if found:
         sys.exit("\n".join(f"{module_path}: {problem}" for problem in found))
     print(f"{module_path}: ABI {manifest.get('abiVersion', 1)}, {len(data)} bytes, sha256 {manifest['sha256'][:12]}…")

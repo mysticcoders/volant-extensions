@@ -96,6 +96,15 @@ To add one, give its folder a `listing.json`:
 { "summary": "One sentence.", "publisher": "Your name", "license": "MIT", "notes": "Optional detail." }
 ```
 
+## Icons and trademarks
+
+An extension can show an icon in the launcher and Settings: a square WebP of at most 32 KB beside its
+manifest, named by `icon` and pinned by `iconSha256` (`./build.sh` writes the hash). Hacker News and
+Lobsters use their sites' own touch icons, converted to 128-pixel WebP. Hacker News and the Y
+Combinator logo are trademarks of Y Combinator; the Lobsters name and logo belong to Lobsters. These
+extensions are unofficial and not endorsed by either site, and the MIT license below covers the code,
+not these marks.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
