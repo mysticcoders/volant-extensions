@@ -12,6 +12,12 @@ Extensions for [Volant](https://usevolant.com), the macOS launcher. Each folder 
 
 Return opens a story or package; Command-Return opens its discussion, homepage or repository in your browser.
 
+In Hacker News and Lobsters, a story's Actions (Command-K) can pin it, hide it, or hide every story
+from its domain; Show Hidden Stories brings them back, and stories you open show as read. Pinned
+stories lead the list. This needs a Volant version with extension storage; the list is kept only on
+your Mac, deleted when you uninstall the extension, and cleared with Clear Data in Settings →
+Extensions.
+
 ## Install
 
 In Volant versions with the extension catalog, open Settings → Extensions, turn on **Allow Community
@@ -49,6 +55,16 @@ types, and helpers for ages, domains, query encoding, RFC 3339 timestamps and ch
 against the manifest's hosts. [`npm/src/kit.ts`](npm/src/kit.ts) is its TypeScript counterpart.
 Every extension has a test that each URL it plans is https on a host its manifest declares, so the
 source cannot drift from what the owner approves.
+
+## Storage and row actions
+
+A manifest with `"storage": true` gets the JSON object it last saved as `"storage"` in every request,
+and any reply may include `"storage"` to replace it (at most 16 KB, an object nested at most 8 levels).
+Rows may carry `"actions": [{"id","title"}]`, shown in their Actions menu, and `"onOpen": true`.
+Choosing an action runs the module with `{"phase":"action","action":…,"item":{…the row…},"storage":…}`,
+and opening a row with `onOpen` sends `{"phase":"opened","item":…}`; neither fetches. A reply of only
+`{"storage":…}` saves it and Volant runs the list again. `kit::reader` implements the pins, hidden
+stories and domains, and read state both readers use, with every list capped well under the limit.
 
 ## Build
 
