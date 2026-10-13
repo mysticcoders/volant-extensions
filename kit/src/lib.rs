@@ -4,7 +4,12 @@
 //! runs twice: `plan` returns `{"fetch": [url, …]}`, then `render` receives the fetched responses and
 //! returns `{"items": […]}`. The module never touches the network; Volant fetches the URLs, and only
 //! from hosts the owner approved. Declare the entry point with [`volant_extension!`].
+//!
+//! Extensions whose manifest sets `"storage": true` also receive the JSON object they last saved, and
+//! rows can offer actions; see [`reader`] for the pins, hidden stories and read state the readers keep.
 use serde::{Deserialize, Serialize};
+
+pub mod reader;
 
 /// The label Volant shows for a row's secondary link when it opens a story's discussion.
 pub const DISCUSSION_TITLE: &str = "Open Comments";
@@ -26,6 +31,25 @@ pub struct Request {
     pub now: i64,
     #[serde(default)]
     pub responses: Vec<Response>,
+    /// The object this extension last saved, when its manifest declares storage.
+    #[serde(default)]
+    pub storage: Option<serde_json::Value>,
+    /// The action chosen in a row's Actions menu, in the `action` phase.
+    #[serde(default)]
+    pub action: Option<String>,
+    /// The row an action or an `opened` notice is about.
+    #[serde(default)]
+    pub item: Option<RowRef>,
+}
+
+/// The links of the row an action is about, as Volant sends it back.
+#[derive(Deserialize, Default)]
+pub struct RowRef {
+    #[serde(default)]
+    pub title: String,
+    pub url: Option<String>,
+    #[serde(rename = "secondaryURL")]
+    pub secondary_url: Option<String>,
 }
 
 impl Request {
@@ -54,12 +78,27 @@ pub struct Item {
     pub secondary_url: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub secondary_title: Option<String>,
+    /// Entries for the row's Actions menu.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub actions: Vec<Action>,
+    /// Asks Volant to send an `opened` notice after Return opens the row's link.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub on_open: bool,
+}
+
+/// One entry in a row's Actions menu: `id` comes back in the `action` phase.
+#[derive(Serialize, Clone, PartialEq, Debug)]
+pub struct Action {
+    pub id: String,
+    pub title: String,
 }
 
 /// What a handler returns for one phase.
 pub enum Reply {
     Fetch(Vec<String>),
     Items(Vec<Item>),
+    /// Saves a new storage object; Volant then runs the list again to show the change.
+    Save(serde_json::Value),
 }
 
 /// Serializes a reply as the JSON Volant expects.
@@ -67,6 +106,7 @@ pub fn encode(reply: &Reply) -> String {
     match reply {
         Reply::Fetch(urls) => serde_json::json!({ "fetch": urls }).to_string(),
         Reply::Items(items) => serde_json::json!({ "items": items }).to_string(),
+        Reply::Save(storage) => serde_json::json!({ "storage": storage }).to_string(),
     }
 }
 

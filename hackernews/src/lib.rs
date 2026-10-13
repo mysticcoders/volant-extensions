@@ -1,7 +1,9 @@
 //! Hacker News for Volant: the front page, new, Ask, Show, or a search, read through Algolia's public
 //! HN API on hn.algolia.com. Return opens the story; Command-Return opens its discussion on
-//! news.ycombinator.com in the browser.
+//! news.ycombinator.com in the browser. Stories can be pinned or hidden, as can whole domains, and
+//! opened stories show as read; all of it is saved on this Mac through Volant's extension storage.
 use serde::Deserialize;
+use volant_extension_kit::reader::{handle_change, State, Story};
 use volant_extension_kit::{age, domain, encode_query, is_web_link, volant_extension, Item, Reply, Request, DISCUSSION_TITLE};
 
 const API: &str = "https://hn.algolia.com/api/v1/";
@@ -54,7 +56,20 @@ fn unavailable(status: i64) -> String {
     format!("Hacker News search is unavailable (HTTP {status}). Try again.")
 }
 
+/// The story's key: its HN item ID, from the discussion link.
+fn key_of(discussion: &str) -> Option<String> {
+    discussion.strip_prefix(DISCUSSION).filter(|id| !id.is_empty() && id.bytes().all(|b| b.is_ascii_digit())).map(str::to_string)
+}
+
+/// Where a story links, except HN itself, whose text posts cannot be hidden as a domain.
+fn story_domain(url: &str) -> Option<String> {
+    domain(url).filter(|host| host != SITE_HOST)
+}
+
 fn handle(request: &Request) -> Result<Reply, String> {
+    if let Some(change) = handle_change(request, key_of, story_domain) {
+        return change;
+    }
     if request.is_plan() {
         return Ok(Reply::Fetch(vec![url_for(&request.query, request.now)]));
     }
@@ -63,7 +78,11 @@ fn handle(request: &Request) -> Result<Reply, String> {
         return Err(unavailable(response.status));
     }
     let page: Page = serde_json::from_str(&response.body).map_err(|_| UNREADABLE.to_string())?;
-    Ok(Reply::Items(page.hits.into_iter().filter_map(|hit| item(hit, request.now)).collect()))
+    let stories = page.hits.into_iter().filter_map(|hit| item(hit, request.now)).filter_map(|item| {
+        let key = item.secondary_url.as_deref().and_then(key_of)?;
+        Some(Story { key, domain: item.url.as_deref().and_then(story_domain), item })
+    }).collect();
+    Ok(Reply::Items(State::load(request).arrange(stories)))
 }
 
 /// One row for a story; hits without a title or with a non-numeric ID are skipped, since the ID
@@ -84,6 +103,7 @@ fn item(hit: Hit, now: i64) -> Option<Item> {
         url: Some(link.unwrap_or_else(|| discussion.clone())),
         secondary_url: Some(discussion),
         secondary_title: Some(DISCUSSION_TITLE.to_string()),
+        ..Default::default()
     })
 }
 
@@ -134,6 +154,37 @@ mod tests {
         assert_eq!(items[0]["url"], "https://www.example.com/post");
         assert_eq!(items[0]["secondaryURL"], "https://news.ycombinator.com/item?id=1");
         assert_eq!(items[1]["url"], "https://news.ycombinator.com/item?id=2");
+    }
+
+    #[test]
+    fn saved_pins_and_hidden_stories_shape_the_list() {
+        let body = r#"{"hits":[
+            {"objectID":"1","title":"First","url":"https://example.com/a"},
+            {"objectID":"2","title":"Second","url":"https://spam.example/b"},
+            {"objectID":"3","title":"Third"}]}"#;
+        let request = serde_json::json!({"phase":"render","query":"","now":0,"responses":[{"url":"u","status":200,"body":body}],
+                                         "storage":{"pinned":["3"],"hiddenDomains":["spam.example"],"read":["1"]}});
+        let value: serde_json::Value = serde_json::from_str(&run(request.to_string().as_bytes(), handle)).unwrap();
+        let items = value["items"].as_array().unwrap();
+        assert_eq!(items.iter().map(|item| item["title"].as_str().unwrap()).collect::<Vec<_>>(), ["Third", "First"]);
+        assert!(items[0]["subtitle"].as_str().unwrap().starts_with("Pinned · "));
+        assert!(items[1]["subtitle"].as_str().unwrap().starts_with("Read · "));
+        assert_eq!(items[0]["onOpen"], true);
+        let ids: Vec<&str> = items[0]["actions"].as_array().unwrap().iter().map(|a| a["id"].as_str().unwrap()).collect();
+        assert_eq!(ids, ["unpin", "hide", "show-hidden"], "HN's own text posts cannot hide news.ycombinator.com");
+    }
+
+    #[test]
+    fn actions_and_opened_rows_save_state() {
+        let row = serde_json::json!({"title":"First","url":"https://example.com/a","secondaryURL":"https://news.ycombinator.com/item?id=1"});
+        let hide = serde_json::json!({"phase":"action","action":"hide-domain","query":"","now":0,"item":row,"storage":{"pinned":["1"]}});
+        let saved: serde_json::Value = serde_json::from_str(&run(hide.to_string().as_bytes(), handle)).unwrap();
+        assert_eq!(saved["storage"]["hiddenDomains"], serde_json::json!(["example.com"]));
+        assert_eq!(saved["storage"]["pinned"], serde_json::json!(["1"]));
+        assert!(saved.get("items").is_none());
+        let opened = serde_json::json!({"phase":"opened","query":"","now":0,"item":row});
+        let saved: serde_json::Value = serde_json::from_str(&run(opened.to_string().as_bytes(), handle)).unwrap();
+        assert_eq!(saved["storage"]["read"], serde_json::json!(["1"]));
     }
 
     #[test]

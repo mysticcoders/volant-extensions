@@ -2,7 +2,7 @@
   "abiVersion": 1,
   "id": "community.volant.lobsters",
   "name": "Lobsters",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "module": "lobsters.wasm",
   "capabilities": [],
   "hosts": [
@@ -10,7 +10,8 @@
   ],
   "output": "items",
   "timeoutSeconds": 2,
-  "sha256": "b20b1929ac2ac6bb533c8a9450c608240286319b6a5719fac381eaebc7a152b6",
+  "sha256": "967ea0ab705c784cd1323cb140255d7cd2508aec8c89d293dfd888f1f631c798",
   "icon": "icon.webp",
-  "iconSha256": "b4da99fe68c508ac4e5a4a7a3c4401a7eb8c0f91ecdb19111916346e58dfbb11"
+  "iconSha256": "b4da99fe68c508ac4e5a4a7a3c4401a7eb8c0f91ecdb19111916346e58dfbb11",
+  "storage": true
 }

@@ -1,6 +1,9 @@
 //! Lobsters for Volant: hottest, newest, or one tag, read from lobste.rs's public JSON pages.
-//! Return opens the story; Command-Return opens its discussion on lobste.rs in the browser.
+//! Return opens the story; Command-Return opens its discussion on lobste.rs in the browser. Stories can
+//! be pinned or hidden, as can whole domains, and opened stories show as read; all of it is saved on
+//! this Mac through Volant's extension storage.
 use serde::Deserialize;
+use volant_extension_kit::reader::{handle_change, State, Story};
 use volant_extension_kit::{age, domain, is_web_link, parse_rfc3339, volant_extension, Item, Reply, Request, DISCUSSION_TITLE};
 
 const SITE: &str = "https://lobste.rs/";
@@ -19,9 +22,10 @@ const NO_SUCH_TAG: &str = "Lobsters has no tag by that name.";
 const UNREADABLE: &str = "Lobsters sent a page Volant could not read.";
 const SEPARATOR: &str = " · ";
 const TAG_SEPARATOR: &str = " ";
+const STORY_PATH: &str = "https://lobste.rs/s/";
 
 #[derive(Deserialize)]
-struct Story {
+struct Post {
     title: Option<String>,
     url: Option<String>,
     score: Option<i64>,
@@ -58,7 +62,21 @@ fn unavailable(status: i64) -> String {
     format!("Lobsters is unavailable (HTTP {status}). Try again.")
 }
 
+/// The story's key: its Lobsters short ID, from a discussion link such as https://lobste.rs/s/abc123/title.
+fn key_of(discussion: &str) -> Option<String> {
+    let id = discussion.strip_prefix(STORY_PATH)?.split('/').next()?;
+    (!id.is_empty() && id.len() <= 12 && id.bytes().all(|b| b.is_ascii_alphanumeric())).then(|| id.to_string())
+}
+
+/// Where a story links, except lobste.rs itself, whose text posts cannot be hidden as a domain.
+fn story_domain(url: &str) -> Option<String> {
+    domain(url).filter(|host| host != SITE_HOST)
+}
+
 fn handle(request: &Request) -> Result<Reply, String> {
+    if let Some(change) = handle_change(request, key_of, story_domain) {
+        return change;
+    }
     if request.is_plan() {
         return Ok(Reply::Fetch(vec![url_for(&request.query)?]));
     }
@@ -68,12 +86,16 @@ fn handle(request: &Request) -> Result<Reply, String> {
         404 => return Err(NO_SUCH_TAG.to_string()),
         status => return Err(unavailable(status)),
     }
-    let stories: Vec<Story> = serde_json::from_str(&response.body).map_err(|_| UNREADABLE.to_string())?;
-    Ok(Reply::Items(stories.into_iter().filter_map(|story| item(story, request.now)).collect()))
+    let stories: Vec<Post> = serde_json::from_str(&response.body).map_err(|_| UNREADABLE.to_string())?;
+    let stories = stories.into_iter().filter_map(|story| item(story, request.now)).filter_map(|item| {
+        let key = item.secondary_url.as_deref().and_then(key_of)?;
+        Some(Story { key, domain: item.url.as_deref().and_then(story_domain), item })
+    }).collect();
+    Ok(Reply::Items(State::load(request).arrange(stories)))
 }
 
 /// One row for a story; stories without a title or a discussion link on lobste.rs are skipped.
-fn item(story: Story, now: i64) -> Option<Item> {
+fn item(story: Post, now: i64) -> Option<Item> {
     let title = story.title.filter(|t| !t.trim().is_empty())?;
     let discussion = story.comments_url.or(story.short_id_url).filter(|u| u.starts_with(SITE))?;
     let link = story.url.filter(|u| is_web_link(u));
@@ -89,6 +111,7 @@ fn item(story: Story, now: i64) -> Option<Item> {
         url: Some(link.unwrap_or_else(|| discussion.clone())),
         secondary_url: Some(discussion),
         secondary_title: Some(DISCUSSION_TITLE.to_string()),
+        ..Default::default()
     })
 }
 
@@ -139,6 +162,25 @@ mod tests {
         assert_eq!(items[0]["subtitle"], "example.org · 12 points · 3 comments · 1h ago · by lee · rust wasm");
         assert_eq!(items[0]["secondaryURL"], "https://lobste.rs/s/abc/fictional_post");
         assert_eq!(items[1]["url"], "https://lobste.rs/s/def/text");
+    }
+
+    #[test]
+    fn saved_state_shapes_the_list_and_actions_save() {
+        let body = r#"[
+            {"title":"Kept","url":"https://example.org/a","comments_url":"https://lobste.rs/s/abc123/kept"},
+            {"title":"Hidden","url":"https://example.org/b","comments_url":"https://lobste.rs/s/def456/hidden"}]"#;
+        let request = serde_json::json!({"phase":"render","query":"","now":0,"responses":[{"url":"u","status":200,"body":body}],
+                                         "storage":{"hidden":["def456"]}});
+        let value: serde_json::Value = serde_json::from_str(&run(request.to_string().as_bytes(), handle)).unwrap();
+        let items = value["items"].as_array().unwrap();
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0]["actions"][2]["title"], "Hide Stories from example.org");
+        let row = serde_json::json!({"title":"Kept","url":"https://example.org/a","secondaryURL":"https://lobste.rs/s/abc123/kept"});
+        let pin = serde_json::json!({"phase":"action","action":"pin","query":"","now":0,"item":row,"storage":{"hidden":["def456"]}});
+        let saved: serde_json::Value = serde_json::from_str(&run(pin.to_string().as_bytes(), handle)).unwrap();
+        assert_eq!(saved["storage"]["pinned"], serde_json::json!(["abc123"]));
+        assert_eq!(saved["storage"]["hidden"], serde_json::json!(["def456"]));
+        assert_eq!(key_of("https://lobste.rs/s/../etc"), None);
     }
 
     #[test]
