@@ -1,0 +1,18 @@
+{
+  "abiVersion": 1,
+  "id": "community.volant.weather",
+  "name": "Weather",
+  "version": "0.1.0",
+  "module": "weather.wasm",
+  "capabilities": [],
+  "hosts": [
+    "api.open-meteo.com",
+    "geocoding-api.open-meteo.com"
+  ],
+  "permissions": [
+    "location"
+  ],
+  "output": "items",
+  "timeoutSeconds": 2,
+  "sha256": "5bdf89f78aa6a99c32f6e5d01f74462e279a890b64730e32ced309bfe0ea7a49"
+}

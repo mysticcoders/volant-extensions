@@ -16,6 +16,7 @@ pub const DISCUSSION_TITLE: &str = "Open Comments";
 const HTTPS: &str = "https://";
 const HTTP: &str = "http://";
 const PLAN: &str = "plan";
+const US_UNITS: &str = "us";
 const JUST_NOW: &str = "just now";
 const MINUTE: i64 = 60;
 const HOUR: i64 = 60 * MINUTE;
@@ -40,6 +41,23 @@ pub struct Request {
     /// The row an action or an `opened` notice is about.
     #[serde(default)]
     pub item: Option<RowRef>,
+    /// Coarse coordinates, sent only when the manifest declares the `location` permission and the
+    /// owner allowed it.
+    #[serde(default)]
+    pub location: Option<Location>,
+    /// The owner's measurement system: "us" or "metric".
+    #[serde(default)]
+    pub units: Option<String>,
+    /// The state a previous round returned with [`Reply::Continue`], in a later `render`.
+    #[serde(default)]
+    pub state: Option<String>,
+}
+
+/// Where the owner is, rounded by Volant to about ten kilometers.
+#[derive(Deserialize, Clone, Copy, Debug, PartialEq)]
+pub struct Location {
+    pub latitude: f64,
+    pub longitude: f64,
 }
 
 /// The links of the row an action is about, as Volant sends it back.
@@ -56,6 +74,11 @@ impl Request {
     /// Whether this is the plan phase, which returns URLs to fetch rather than rows.
     pub fn is_plan(&self) -> bool {
         self.phase == PLAN
+    }
+
+    /// Whether to show US customary units (Fahrenheit, miles per hour) rather than metric.
+    pub fn uses_us_units(&self) -> bool {
+        self.units.as_deref() == Some(US_UNITS)
     }
 }
 
@@ -99,6 +122,9 @@ pub enum Reply {
     Items(Vec<Item>),
     /// Saves a new storage object; Volant then runs the list again to show the change.
     Save(serde_json::Value),
+    /// From `render`: fetches another round of URLs and renders again with their responses and this
+    /// state, for a lookup that needs one answer before it can ask the next question.
+    Continue(Vec<String>, String),
 }
 
 /// Serializes a reply as the JSON Volant expects.
@@ -107,6 +133,7 @@ pub fn encode(reply: &Reply) -> String {
         Reply::Fetch(urls) => serde_json::json!({ "fetch": urls }).to_string(),
         Reply::Items(items) => serde_json::json!({ "items": items }).to_string(),
         Reply::Save(storage) => serde_json::json!({ "storage": storage }).to_string(),
+        Reply::Continue(urls, state) => serde_json::json!({ "fetch": urls, "state": state }).to_string(),
     }
 }
 
