@@ -8,6 +8,9 @@
   "hosts": [
     "api.todoist.com"
   ],
+  "appLinks": [
+    "todoist"
+  ],
   "secrets": [
     {
       "id": "token",
@@ -20,5 +23,5 @@
   ],
   "output": "items",
   "timeoutSeconds": 2,
-  "sha256": "fe27e49c29e88b80fe089947af87bcc80ccce95deca84df03760ffab63b2bc2c"
+  "sha256": "ceeb3b2cddd139f1ee3b072d86506f0723d57c81805df7290ddef540075e3b12"
 }

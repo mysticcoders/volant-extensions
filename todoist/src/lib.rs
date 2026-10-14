@@ -3,17 +3,25 @@
 //! `todo inbox` and `todo p1` show those views, `todo /<filter>` runs any Todoist filter, and any
 //! other text offers to add it as a task, followed by the tasks that match it.
 //!
+//! Return opens a task in Todoist.app (Volant falls back to the web link when it is not installed),
+//! and Command-Return opens it on app.todoist.com.
+//!
 //! Volant adds the owner's API token to requests to api.todoist.com itself, so this module never
 //! sees it. Changes are sent only from the `action` phase, after the owner chooses a row or action.
+use std::collections::HashMap;
+
 use serde::Deserialize;
 use volant_extension_kit::{encode_query, volant_extension, Action, Item, Reply, Request, Submission};
 
 const API: &str = "https://api.todoist.com/api/v1/";
 const FILTER: &str = "tasks/filter?limit=30&query=";
 const QUICK_ADD: &str = "tasks/quick";
+const PROJECTS: &str = "projects?limit=200";
 const TASKS: &str = "tasks/";
 const CLOSE: &str = "/close";
 const TASK_PAGE: &str = "https://app.todoist.com/app/task/";
+const TASK_APP_LINK: &str = "todoist://task?id=";
+const BROWSER_TITLE: &str = "Open in Browser";
 const POST: &str = "POST";
 const FILTER_PREFIX: &str = "/";
 const SEARCH_FILTER: &str = "search: ";
@@ -58,9 +66,23 @@ struct Page {
 }
 
 #[derive(Deserialize)]
+struct Projects {
+    #[serde(default)]
+    results: Vec<Project>,
+}
+
+#[derive(Deserialize)]
+struct Project {
+    id: String,
+    name: String,
+}
+
+#[derive(Deserialize)]
 struct Task {
     id: String,
     content: String,
+    #[serde(default)]
+    project_id: String,
     #[serde(default)]
     priority: i64,
     due: Option<Due>,
@@ -102,6 +124,11 @@ pub fn parse(query: &str) -> Query {
 /// The task list request for a Todoist filter.
 pub fn filter_url(filter: &str) -> String {
     format!("{API}{FILTER}{}", encode_query(filter))
+}
+
+/// The project list, fetched with every task list so rows can name their project.
+pub fn projects_url() -> String {
+    format!("{API}{PROJECTS}")
 }
 
 fn quick_add_url() -> String {
@@ -153,16 +180,19 @@ fn priority_label(priority: i64) -> Option<String> {
     (2..=URGENT).contains(&priority).then(|| format!("{PRIORITY_PREFIX}{}", URGENT + 1 - priority))
 }
 
-/// One row for an open task, with its priority, due date and labels.
-fn task_row(task: &Task) -> Item {
+/// One row for an open task, with its priority, due date, project and labels.
+fn task_row(task: &Task, projects: &HashMap<String, String>) -> Item {
     let mut details = Vec::new();
     if let Some(priority) = priority_label(task.priority) { details.push(priority); }
     if let Some(due) = task.due.as_ref().and_then(|due| due.string.clone()).filter(|s| !s.is_empty()) { details.push(due); }
+    if let Some(project) = projects.get(&task.project_id) { details.push(project.clone()); }
     details.extend(task.labels.iter().map(|label| format!("{LABEL_PREFIX}{label}")));
     Item {
         title: task.content.clone(),
         subtitle: Some(details.join(SEPARATOR)).filter(|s| !s.is_empty()),
-        url: Some(format!("{TASK_PAGE}{}", task.id)),
+        url: Some(format!("{TASK_APP_LINK}{}", task.id)),
+        secondary_url: Some(format!("{TASK_PAGE}{}", task.id)),
+        secondary_title: Some(BROWSER_TITLE.to_string()),
         actions: TASK_ACTIONS.iter().map(|(id, title, _)| Action { id: id.to_string(), title: title.to_string() }).collect(),
         ..Default::default()
     }
@@ -190,7 +220,18 @@ fn plan(request: &Request) -> Reply {
         Query::Filter(filter) => filter,
         Query::Text(text) => format!("{SEARCH_FILTER}{text}"),
     };
-    Reply::Fetch(vec![filter_url(&filter)])
+    Reply::Fetch(vec![filter_url(&filter), projects_url()])
+}
+
+/// Project names by ID, or none if the project list failed or could not be read; rows then simply
+/// leave the project out.
+fn project_names(request: &Request) -> HashMap<String, String> {
+    let projects = projects_url();
+    request.responses.iter()
+        .find(|response| response.url == projects && (200..=299).contains(&response.status))
+        .and_then(|response| serde_json::from_str::<Projects>(&response.body).ok())
+        .map(|list| list.results.into_iter().map(|project| (project.id, project.name)).collect())
+        .unwrap_or_default()
 }
 
 /// Turns a response's status into the error the owner should see, if it failed.
@@ -203,13 +244,17 @@ fn check(status: i64) -> Result<(), String> {
 }
 
 fn render(request: &Request) -> Result<Reply, String> {
-    let response = request.responses.first().ok_or(NOTHING)?;
-    check(response.status)?;
     if let Some(state) = request.state.as_deref() {
+        let response = request.responses.first().ok_or(NOTHING)?;
+        check(response.status)?;
         return confirmation(state, &response.body, &request.query);
     }
+    let projects = projects_url();
+    let response = request.responses.iter().find(|response| response.url != projects).ok_or(NOTHING)?;
+    check(response.status)?;
     let page: Page = serde_json::from_str(&response.body).map_err(|_| UNREADABLE.to_string())?;
-    let mut items: Vec<Item> = sorted(page.results).iter().map(task_row).collect();
+    let names = project_names(request);
+    let mut items: Vec<Item> = sorted(page.results).iter().map(|task| task_row(task, &names)).collect();
     match parse(&request.query) {
         Query::Text(text) if !text.is_empty() => {
             items.insert(0, Item { title: add_title(&text), subtitle: Some(ADD_HINT.to_string()), primary_action: Some(ADD.to_string()), ..Default::default() });
@@ -245,7 +290,7 @@ fn act(request: &Request) -> Result<Reply, String> {
     }
     let (_, _, due) = TASK_ACTIONS.iter().find(|(id, ..)| *id == action).ok_or(UNKNOWN_ACTION)?;
     let row = request.item.as_ref().ok_or(NO_TASK)?;
-    let id = row.url.as_deref().and_then(task_id).ok_or(NO_TASK)?;
+    let id = row.secondary_url.as_deref().and_then(task_id).ok_or(NO_TASK)?;
     Ok(match due {
         None => Reply::Submit(vec![Submission { url: close_url(id), method: POST.to_string(), json: None }], format!("{COMPLETED_STATE}{}", row.title)),
         Some(due) => {
@@ -269,7 +314,7 @@ mod tests {
     const MANIFEST: &str = include_str!("../manifest.json");
     const TASKS_BODY: &str = r#"{"results":[
         {"id":"6Xb","content":"Renew passport","priority":1,"due":{"date":"2026-10-20","string":"Oct 20"},"labels":[],"checked":false,"is_deleted":false},
-        {"id":"6Xa","content":"Ship 0.3.3","priority":4,"due":{"date":"2026-10-14T15:00:00","string":"today at 3pm"},"labels":["work"],"checked":false,"is_deleted":false},
+        {"id":"6Xa","content":"Ship 0.3.3","project_id":"P2","priority":4,"due":{"date":"2026-10-14T15:00:00","string":"today at 3pm"},"labels":["work"],"checked":false,"is_deleted":false},
         {"id":"6Xc","content":"Someday idea","priority":2,"due":null,"labels":["ideas","later"],"checked":false,"is_deleted":false},
         {"id":"6Xd","content":"Already done","priority":1,"due":null,"labels":[],"checked":true,"is_deleted":false},
         {"id":"../x","content":"Odd ID","priority":1,"due":null,"labels":[],"checked":false,"is_deleted":false}],"next_cursor":null}"#;
@@ -279,8 +324,11 @@ mod tests {
         serde_json::from_str(&run(request.to_string().as_bytes(), handle)).unwrap()
     }
 
+    const PROJECTS_BODY: &str = r#"{"results":[{"id":"P1","name":"Inbox"},{"id":"P2","name":"Volant"}],"next_cursor":null}"#;
+
     fn render_with(query: &str, body: &str) -> serde_json::Value {
-        reply(serde_json::json!({"phase":"render","query":query,"now":0,"responses":[{"url":"u","status":200,"body":body}]}))
+        reply(serde_json::json!({"phase":"render","query":query,"now":0,"responses":[
+            {"url":filter_url("x"),"status":200,"body":body},{"url":projects_url(),"status":200,"body":PROJECTS_BODY}]}))
     }
 
     #[test]
@@ -293,15 +341,16 @@ mod tests {
 
     #[test]
     fn every_url_is_on_a_manifest_host() {
-        for url in [filter_url("today | overdue"), filter_url("search: a&b #c"), quick_add_url(), close_url("6Xa"), update_url("6Xa")] {
+        for url in [filter_url("today | overdue"), projects_url(), filter_url("search: a&b #c"), quick_add_url(), close_url("6Xa"), update_url("6Xa")] {
             assert!(manifest_permits(MANIFEST, &url), "{url}");
         }
     }
 
     #[test]
     fn plan_fetches_the_filter_for_the_query() {
-        assert_eq!(reply(serde_json::json!({"phase":"plan","query":"","now":0}))["fetch"][0],
-            "https://api.todoist.com/api/v1/tasks/filter?limit=30&query=today%20%7C%20overdue");
+        let today = reply(serde_json::json!({"phase":"plan","query":"","now":0}));
+        assert_eq!(today["fetch"][0], "https://api.todoist.com/api/v1/tasks/filter?limit=30&query=today%20%7C%20overdue");
+        assert_eq!(today["fetch"][1], "https://api.todoist.com/api/v1/projects?limit=200");
         assert_eq!(reply(serde_json::json!({"phase":"plan","query":"milk","now":0}))["fetch"][0],
             "https://api.todoist.com/api/v1/tasks/filter?limit=30&query=search%3A%20milk");
     }
@@ -311,12 +360,20 @@ mod tests {
         let items = render_with("", TASKS_BODY)["items"].as_array().unwrap().clone();
         assert_eq!(items.len(), 3);
         assert_eq!(items[0]["title"], "Ship 0.3.3");
-        assert_eq!(items[0]["subtitle"], "p1 · today at 3pm · @work");
-        assert_eq!(items[0]["url"], "https://app.todoist.com/app/task/6Xa");
+        assert_eq!(items[0]["subtitle"], "p1 · today at 3pm · Volant · @work");
+        assert_eq!(items[0]["url"], "todoist://task?id=6Xa");
+        assert_eq!(items[0]["secondaryURL"], "https://app.todoist.com/app/task/6Xa");
         assert_eq!(items[0]["actions"][0]["id"], "complete");
         assert_eq!(items[1]["title"], "Renew passport");
         assert_eq!(items[1]["subtitle"], "Oct 20");
         assert_eq!(items[2]["subtitle"], "p3 · @ideas · @later");
+    }
+
+    #[test]
+    fn a_failed_project_list_only_drops_project_names() {
+        let request = serde_json::json!({"phase":"render","query":"","now":0,"responses":[
+            {"url":filter_url("x"),"status":200,"body":TASKS_BODY},{"url":projects_url(),"status":500,"body":""}]});
+        assert_eq!(reply(request)["items"][0]["subtitle"], "p1 · today at 3pm · @work");
     }
 
     #[test]
@@ -336,12 +393,12 @@ mod tests {
         let add = reply(serde_json::json!({"phase":"action","action":"add","query":"buy milk tomorrow p1","now":0,"item":{"title":"Add “buy milk tomorrow p1”"}}));
         assert_eq!(add["fetch"][0], serde_json::json!({"url":"https://api.todoist.com/api/v1/tasks/quick","method":"POST","json":{"text":"buy milk tomorrow p1"}}));
         assert_eq!(add["state"], "added");
-        let row = serde_json::json!({"title":"Ship 0.3.3","url":"https://app.todoist.com/app/task/6Xa"});
+        let row = serde_json::json!({"title":"Ship 0.3.3","url":"todoist://task?id=6Xa","secondaryURL":"https://app.todoist.com/app/task/6Xa"});
         let done = reply(serde_json::json!({"phase":"action","action":"complete","query":"","now":0,"item":row}));
         assert_eq!(done["fetch"][0], serde_json::json!({"url":"https://api.todoist.com/api/v1/tasks/6Xa/close","method":"POST"}));
         let later = reply(serde_json::json!({"phase":"action","action":"tomorrow","query":"","now":0,"item":row}));
         assert_eq!(later["fetch"][0]["json"], serde_json::json!({"due_string":"tomorrow"}));
-        let foreign = reply(serde_json::json!({"phase":"action","action":"complete","query":"","now":0,"item":{"title":"x","url":"https://example.com/app/task/1"}}));
+        let foreign = reply(serde_json::json!({"phase":"action","action":"complete","query":"","now":0,"item":{"title":"x","secondaryURL":"https://example.com/app/task/1"}}));
         assert_eq!(foreign["items"][0]["title"], NO_TASK);
     }
 
