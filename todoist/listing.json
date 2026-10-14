@@ -1,0 +1,6 @@
+{
+  "summary": "Today's and upcoming Todoist tasks, quick add with natural language, and complete or reschedule without leaving the launcher.",
+  "publisher": "Mystic Coders",
+  "license": "MIT",
+  "notes": "Uses your Todoist API token, which Volant keeps in your Keychain and adds to requests to api.todoist.com itself; the extension never sees it. Not affiliated with Doist."
+}

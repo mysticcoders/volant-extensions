@@ -119,6 +119,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "volant-todoist"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "volant-extension-kit",
+]
+
+[[package]]
 name = "volant-weather"
 version = "0.1.0"
 dependencies = [

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["kit", "hackernews", "lobsters", "weather"]
+members = ["kit", "hackernews", "lobsters", "todoist", "weather"]
 
 [profile.release]
 opt-level = "s"
