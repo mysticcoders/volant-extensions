@@ -7,7 +7,7 @@ use volant_extension_kit::{encode_query, parse_rfc3339, volant_extension, Item, 
 
 const GEOCODE: &str = "https://geocoding-api.open-meteo.com/v1/search?count=1&language=en&format=json&name=";
 const FORECAST: &str = "https://api.open-meteo.com/v1/forecast";
-const FORECAST_FIELDS: &str = "&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=10";
+const FORECAST_FIELDS: &str = "&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=10";
 const ATTRIBUTION_URL: &str = "https://open-meteo.com/";
 const ATTRIBUTION_TITLE: &str = "Weather Data by Open-Meteo";
 const GEOCODE_STATE: &str = "geocode";
@@ -31,28 +31,42 @@ const WEEKDAYS: [&str; 7] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS: [&str; 12] = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const UNKNOWN_CONDITION: &str = "Unknown conditions";
 
-/// WMO weather interpretation codes, as Open-Meteo reports them, and how each reads in a row.
-const CONDITIONS: &[(&[i64], &str)] = &[
-    (&[0], "Clear"),
-    (&[1], "Mainly clear"),
-    (&[2], "Partly cloudy"),
-    (&[3], "Overcast"),
-    (&[45, 48], "Fog"),
-    (&[51, 53, 55], "Drizzle"),
-    (&[56, 57], "Freezing drizzle"),
-    (&[61], "Light rain"),
-    (&[63], "Rain"),
-    (&[65], "Heavy rain"),
-    (&[66, 67], "Freezing rain"),
-    (&[71], "Light snow"),
-    (&[73], "Snow"),
-    (&[75], "Heavy snow"),
-    (&[77], "Snow grains"),
-    (&[80, 81, 82], "Rain showers"),
-    (&[85, 86], "Snow showers"),
-    (&[95], "Thunderstorm"),
-    (&[96, 99], "Thunderstorm with hail"),
+/// WMO weather interpretation codes, as Open-Meteo reports them: how each reads in a row, and the
+/// Volant row symbol for it by day and by night.
+const CONDITIONS: &[(&[i64], &str, &str, &str)] = &[
+    (&[0], "Clear", SUN, MOON),
+    (&[1], "Mainly clear", CLOUD_SUN, CLOUD_MOON),
+    (&[2], "Partly cloudy", CLOUD_SUN, CLOUD_MOON),
+    (&[3], "Overcast", CLOUD, CLOUD),
+    (&[45, 48], "Fog", FOG, FOG),
+    (&[51, 53, 55], "Drizzle", DRIZZLE, DRIZZLE),
+    (&[56, 57], "Freezing drizzle", DRIZZLE, DRIZZLE),
+    (&[61], "Light rain", RAIN, RAIN),
+    (&[63], "Rain", RAIN, RAIN),
+    (&[65], "Heavy rain", HEAVY_RAIN, HEAVY_RAIN),
+    (&[66, 67], "Freezing rain", SLEET, SLEET),
+    (&[71], "Light snow", SNOW, SNOW),
+    (&[73], "Snow", SNOW, SNOW),
+    (&[75], "Heavy snow", SNOW, SNOW),
+    (&[77], "Snow grains", SNOW, SNOW),
+    (&[80, 81], "Rain showers", RAIN, RAIN),
+    (&[82], "Heavy rain showers", HEAVY_RAIN, HEAVY_RAIN),
+    (&[85, 86], "Snow showers", SNOW, SNOW),
+    (&[95], "Thunderstorm", THUNDERSTORM, THUNDERSTORM),
+    (&[96, 99], "Thunderstorm with hail", THUNDERSTORM, THUNDERSTORM),
 ];
+const SUN: &str = "sun";
+const MOON: &str = "moon";
+const CLOUD_SUN: &str = "cloud-sun";
+const CLOUD_MOON: &str = "cloud-moon";
+const CLOUD: &str = "cloud";
+const FOG: &str = "fog";
+const DRIZZLE: &str = "drizzle";
+const RAIN: &str = "rain";
+const HEAVY_RAIN: &str = "heavy-rain";
+const SLEET: &str = "sleet";
+const SNOW: &str = "snow";
+const THUNDERSTORM: &str = "thunderstorm";
 
 #[derive(Deserialize)]
 struct Places {
@@ -81,6 +95,8 @@ struct Current {
     apparent_temperature: Option<f64>,
     weather_code: Option<i64>,
     wind_speed_10m: Option<f64>,
+    /// 1 by day and 0 at night at the place, which picks the moon symbols.
+    is_day: Option<i64>,
 }
 
 #[derive(Deserialize)]
@@ -114,7 +130,13 @@ fn place_label(place: &Place) -> String {
 
 /// What a WMO weather code means, in words.
 fn condition(code: Option<i64>) -> &'static str {
-    code.and_then(|code| CONDITIONS.iter().find(|(codes, _)| codes.contains(&code)).map(|(_, text)| *text)).unwrap_or(UNKNOWN_CONDITION)
+    code.and_then(|code| CONDITIONS.iter().find(|(codes, ..)| codes.contains(&code)).map(|(_, text, ..)| *text)).unwrap_or(UNKNOWN_CONDITION)
+}
+
+/// The row symbol for a WMO weather code, by day or by night; none for an unknown code.
+pub fn symbol(code: Option<i64>, day: bool) -> Option<String> {
+    let entry = code.and_then(|code| CONDITIONS.iter().find(|(codes, ..)| codes.contains(&code)))?;
+    Some(if day { entry.2 } else { entry.3 }.to_string())
 }
 
 /// A Celsius temperature as whole degrees in the owner's units.
@@ -209,6 +231,7 @@ fn rows(label: &str, forecast: &Forecast, us: bool) -> Vec<Item> {
             subtitle: Some(details.join(SEPARATOR)).filter(|s| !s.is_empty()),
             secondary_url: Some(ATTRIBUTION_URL.to_string()),
             secondary_title: Some(ATTRIBUTION_TITLE.to_string()),
+            symbol: symbol(current.weather_code, current.is_day != Some(0)),
             ..Default::default()
         });
     }
@@ -222,6 +245,7 @@ fn rows(label: &str, forecast: &Forecast, us: bool) -> Vec<Item> {
             items.push(Item {
                 title: format!("{}{SEPARATOR}{}", day_label(index, date), condition(daily.weather_code.get(index).copied().flatten())),
                 subtitle: Some(details.join(SEPARATOR)).filter(|s| !s.is_empty()),
+                symbol: symbol(daily.weather_code.get(index).copied().flatten(), true),
                 ..Default::default()
             });
         }
@@ -297,6 +321,9 @@ mod tests {
         assert_eq!(items[2]["title"], "Tomorrow · Light rain");
         assert_eq!(items[3]["title"], "Fri, Oct 16 · Thunderstorm");
         assert_eq!(items[3]["subtitle"], "90% chance of rain");
+        assert_eq!(items[0]["symbol"], "cloud-sun");
+        assert_eq!(items[2]["symbol"], "rain");
+        assert_eq!(items[3]["symbol"], "thunderstorm");
         let metric = reply(serde_json::json!({"phase":"render","query":"","now":0,"units":"metric","state":"forecast:Paris","responses":[{"url":"u","status":200,"body":FORECAST_BODY}]}));
         assert_eq!(metric["items"][0]["title"], "Paris · 23° · Partly cloudy");
         assert_eq!(metric["items"][0]["subtitle"], "Feels like 22° · Wind 16 km/h");
@@ -308,6 +335,19 @@ mod tests {
         assert_eq!(busy["items"][0]["title"], "Open-Meteo is unavailable (HTTP 429). Try again.");
         let garbage = reply(serde_json::json!({"phase":"render","query":"","now":0,"state":"forecast:Paris","responses":[{"url":"u","status":200,"body":"<html>"}]}));
         assert_eq!(garbage["items"][0]["title"], UNREADABLE);
+    }
+
+    #[test]
+    fn symbols_follow_the_code_and_the_night() {
+        assert_eq!(symbol(Some(0), true).as_deref(), Some("sun"));
+        assert_eq!(symbol(Some(0), false).as_deref(), Some("moon"));
+        assert_eq!(symbol(Some(2), false).as_deref(), Some("cloud-moon"));
+        assert_eq!(symbol(Some(82), true).as_deref(), Some("heavy-rain"));
+        assert_eq!(symbol(Some(67), true).as_deref(), Some("sleet"));
+        assert_eq!(symbol(Some(1234), true), None);
+        let night = r#"{"current":{"temperature_2m":10.0,"weather_code":0,"is_day":0},"daily":null}"#;
+        let value = reply(serde_json::json!({"phase":"render","query":"","now":0,"state":"forecast:Paris","responses":[{"url":"u","status":200,"body":night}]}));
+        assert_eq!(value["items"][0]["symbol"], "moon");
     }
 
     #[test]

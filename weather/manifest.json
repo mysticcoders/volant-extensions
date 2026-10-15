@@ -2,7 +2,7 @@
   "abiVersion": 1,
   "id": "community.volant.weather",
   "name": "Weather",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "module": "weather.wasm",
   "capabilities": [],
   "hosts": [
@@ -14,7 +14,7 @@
   ],
   "output": "items",
   "timeoutSeconds": 2,
-  "sha256": "16a0ead305946331eee0fc122c3300411aeedc896bddf8923ef50835ebffc7e5",
+  "sha256": "0272f728939e980ad3eb75353c44b8977af9435884629face4e8df290b18eb87",
   "icon": "icon.webp",
   "iconSha256": "8994ca3567d4ddf2ca079ef5b856b6ff429c5216ffd5a23151f377ce01f8c7c0"
 }
