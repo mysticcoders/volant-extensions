@@ -2,7 +2,7 @@
   "abiVersion": 2,
   "id": "community.volant.wiki",
   "name": "Wikipedia",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "module": "wikipedia.wasm",
   "capabilities": [],
   "hosts": [
@@ -12,5 +12,7 @@
   "timeoutSeconds": 2,
   "sha256": "284b88f692c4b90365310c003f2e23a37d8aa81a3bf5d791913b8ca941eca45f",
   "icon": "icon.webp",
-  "iconSha256": "144e78f3f518a77905c8d90e3fab8929b6bdf5c53523c75f43095b8f9dcc161a"
+  "iconSha256": "144e78f3f518a77905c8d90e3fab8929b6bdf5c53523c75f43095b8f9dcc161a",
+  "mode": "search",
+  "placeholder": "Search Wikipedia"
 }

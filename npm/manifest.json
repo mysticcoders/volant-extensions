@@ -2,7 +2,7 @@
   "abiVersion": 2,
   "id": "community.volant.npm",
   "name": "npm",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "module": "npm.wasm",
   "capabilities": [],
   "hosts": [
@@ -12,5 +12,7 @@
   "timeoutSeconds": 2,
   "sha256": "66b1234f00bee9c90c10d97cb616ac279b4b939627d1debbf221bce2ffc93fb3",
   "icon": "icon.webp",
-  "iconSha256": "21945e535e4d8344b9817357d9c7a3e60c6f51370e079be81f1443f9fe314273"
+  "iconSha256": "21945e535e4d8344b9817357d9c7a3e60c6f51370e079be81f1443f9fe314273",
+  "mode": "search",
+  "placeholder": "Search npm packages"
 }
