@@ -3,8 +3,8 @@
 //! `todo inbox` and `todo p1` show those views, `todo /<filter>` runs any Todoist filter, and any
 //! other text offers to add it as a task, followed by the tasks that match it.
 //!
-//! Return opens a task on app.todoist.com; Command-Return opens it in Todoist.app once Volant allows
-//! the manifest's declared `todoist` app links (until then Volant drops that link).
+//! Return opens a task in Todoist.app through the manifest's declared `todoist` app link; Volant opens
+//! the web link instead when Todoist.app is not installed. Command-Return opens it on app.todoist.com.
 //!
 //! Volant adds the owner's API token to requests to api.todoist.com itself, so this module never
 //! sees it. Changes are sent only from the `action` phase, after the owner chooses a row or action.
@@ -21,7 +21,7 @@ const TASKS: &str = "tasks/";
 const CLOSE: &str = "/close";
 const TASK_PAGE: &str = "https://app.todoist.com/app/task/";
 const TASK_APP_LINK: &str = "todoist://task?id=";
-const APP_TITLE: &str = "Open in Todoist";
+const BROWSER_TITLE: &str = "Open in Browser";
 const POST: &str = "POST";
 const FILTER_PREFIX: &str = "/";
 const SEARCH_FILTER: &str = "search: ";
@@ -190,9 +190,9 @@ fn task_row(task: &Task, projects: &HashMap<String, String>) -> Item {
     Item {
         title: task.content.clone(),
         subtitle: Some(details.join(SEPARATOR)).filter(|s| !s.is_empty()),
-        url: Some(format!("{TASK_PAGE}{}", task.id)),
-        secondary_url: Some(format!("{TASK_APP_LINK}{}", task.id)),
-        secondary_title: Some(APP_TITLE.to_string()),
+        url: Some(format!("{TASK_APP_LINK}{}", task.id)),
+        secondary_url: Some(format!("{TASK_PAGE}{}", task.id)),
+        secondary_title: Some(BROWSER_TITLE.to_string()),
         actions: TASK_ACTIONS.iter().map(|(id, title, _)| Action { id: id.to_string(), title: title.to_string() }).collect(),
         ..Default::default()
     }
@@ -290,7 +290,7 @@ fn act(request: &Request) -> Result<Reply, String> {
     }
     let (_, _, due) = TASK_ACTIONS.iter().find(|(id, ..)| *id == action).ok_or(UNKNOWN_ACTION)?;
     let row = request.item.as_ref().ok_or(NO_TASK)?;
-    let id = row.url.as_deref().and_then(task_id).ok_or(NO_TASK)?;
+    let id = [row.secondary_url.as_deref(), row.url.as_deref()].into_iter().flatten().find_map(task_id).ok_or(NO_TASK)?;
     Ok(match due {
         None => Reply::Submit(vec![Submission { url: close_url(id), method: POST.to_string(), json: None }], format!("{COMPLETED_STATE}{}", row.title)),
         Some(due) => {
@@ -361,8 +361,8 @@ mod tests {
         assert_eq!(items.len(), 3);
         assert_eq!(items[0]["title"], "Ship 0.3.3");
         assert_eq!(items[0]["subtitle"], "p1 · today at 3pm · Volant · @work");
-        assert_eq!(items[0]["url"], "https://app.todoist.com/app/task/6Xa");
-        assert_eq!(items[0]["secondaryURL"], "todoist://task?id=6Xa");
+        assert_eq!(items[0]["url"], "todoist://task?id=6Xa");
+        assert_eq!(items[0]["secondaryURL"], "https://app.todoist.com/app/task/6Xa");
         assert_eq!(items[0]["actions"][0]["id"], "complete");
         assert_eq!(items[1]["title"], "Renew passport");
         assert_eq!(items[1]["subtitle"], "Oct 20");
@@ -393,7 +393,7 @@ mod tests {
         let add = reply(serde_json::json!({"phase":"action","action":"add","query":"buy milk tomorrow p1","now":0,"item":{"title":"Add “buy milk tomorrow p1”"}}));
         assert_eq!(add["fetch"][0], serde_json::json!({"url":"https://api.todoist.com/api/v1/tasks/quick","method":"POST","json":{"text":"buy milk tomorrow p1"}}));
         assert_eq!(add["state"], "added");
-        let row = serde_json::json!({"title":"Ship 0.3.3","url":"https://app.todoist.com/app/task/6Xa","secondaryURL":"todoist://task?id=6Xa"});
+        let row = serde_json::json!({"title":"Ship 0.3.3","url":"todoist://task?id=6Xa","secondaryURL":"https://app.todoist.com/app/task/6Xa"});
         let done = reply(serde_json::json!({"phase":"action","action":"complete","query":"","now":0,"item":row}));
         assert_eq!(done["fetch"][0], serde_json::json!({"url":"https://api.todoist.com/api/v1/tasks/6Xa/close","method":"POST"}));
         let later = reply(serde_json::json!({"phase":"action","action":"tomorrow","query":"","now":0,"item":row}));
