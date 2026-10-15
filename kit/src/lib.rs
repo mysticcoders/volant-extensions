@@ -16,6 +16,8 @@ pub const DISCUSSION_TITLE: &str = "Open Comments";
 const HTTPS: &str = "https://";
 const HTTP: &str = "http://";
 const PLAN: &str = "plan";
+const ACTION: &str = "action";
+const US_UNITS: &str = "us";
 const JUST_NOW: &str = "just now";
 const MINUTE: i64 = 60;
 const HOUR: i64 = 60 * MINUTE;
@@ -40,6 +42,23 @@ pub struct Request {
     /// The row an action or an `opened` notice is about.
     #[serde(default)]
     pub item: Option<RowRef>,
+    /// Coarse coordinates, sent only when the manifest declares the `location` permission and the
+    /// owner allowed it.
+    #[serde(default)]
+    pub location: Option<Location>,
+    /// The owner's measurement system: "us" or "metric".
+    #[serde(default)]
+    pub units: Option<String>,
+    /// The state a previous round returned with [`Reply::Continue`], in a later `render`.
+    #[serde(default)]
+    pub state: Option<String>,
+}
+
+/// Where the owner is, rounded by Volant to about ten kilometers.
+#[derive(Deserialize, Clone, Copy, Debug, PartialEq)]
+pub struct Location {
+    pub latitude: f64,
+    pub longitude: f64,
 }
 
 /// The links of the row an action is about, as Volant sends it back.
@@ -56,6 +75,16 @@ impl Request {
     /// Whether this is the plan phase, which returns URLs to fetch rather than rows.
     pub fn is_plan(&self) -> bool {
         self.phase == PLAN
+    }
+
+    /// Whether this is the action phase, after the owner chose a row's action.
+    pub fn is_action(&self) -> bool {
+        self.phase == ACTION
+    }
+
+    /// Whether to show US customary units (Fahrenheit, miles per hour) rather than metric.
+    pub fn uses_us_units(&self) -> bool {
+        self.units.as_deref() == Some(US_UNITS)
     }
 }
 
@@ -84,6 +113,21 @@ pub struct Item {
     /// Asks Volant to send an `opened` notice after Return opens the row's link.
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub on_open: bool,
+    /// An action `id` that Return runs instead of opening the row's link.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub primary_action: Option<String>,
+}
+
+/// A request that changes something, such as adding or completing a task. Volant sends it only from
+/// the `action` phase, which the owner starts by choosing a row or an action, and only to a host the
+/// manifest declares. A secret the manifest declares for that host is added by Volant as a header;
+/// the module never sees it.
+#[derive(Serialize, Clone, PartialEq, Debug)]
+pub struct Submission {
+    pub url: String,
+    pub method: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub json: Option<serde_json::Value>,
 }
 
 /// One entry in a row's Actions menu: `id` comes back in the `action` phase.
@@ -99,6 +143,13 @@ pub enum Reply {
     Items(Vec<Item>),
     /// Saves a new storage object; Volant then runs the list again to show the change.
     Save(serde_json::Value),
+    /// Fetches URLs and renders again with their responses and this state. From `render`, it is
+    /// another round, for a lookup that needs one answer before it can ask the next question.
+    Continue(Vec<String>, String),
+    /// From `action`: sends these requests, then renders with their responses and this state.
+    Submit(Vec<Submission>, String),
+    /// Shows a short confirmation, then Volant runs the list again.
+    Notice(String),
 }
 
 /// Serializes a reply as the JSON Volant expects.
@@ -107,6 +158,9 @@ pub fn encode(reply: &Reply) -> String {
         Reply::Fetch(urls) => serde_json::json!({ "fetch": urls }).to_string(),
         Reply::Items(items) => serde_json::json!({ "items": items }).to_string(),
         Reply::Save(storage) => serde_json::json!({ "storage": storage }).to_string(),
+        Reply::Continue(urls, state) => serde_json::json!({ "fetch": urls, "state": state }).to_string(),
+        Reply::Submit(requests, state) => serde_json::json!({ "fetch": requests, "state": state }).to_string(),
+        Reply::Notice(text) => serde_json::json!({ "notice": text }).to_string(),
     }
 }
 

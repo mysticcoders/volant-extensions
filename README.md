@@ -9,8 +9,18 @@ Extensions for [Volant](https://usevolant.com), the macOS launcher. Each folder 
 | [Lobsters](lobsters) | Rust | `lobsters`, `lobsters new`, `lobsters <tag>` | `lobste.rs` | Hottest, newest or one tag |
 | [npm](npm) | TypeScript | `npm <search>` | `registry.npmjs.org` | Packages matching a name or keyword |
 | [Wikipedia](wikipedia) | Python | `wiki <search>` | `en.wikipedia.org` | English Wikipedia articles matching a topic |
+| [Weather](weather) | Rust | `weather`, `weather <place>` | `api.open-meteo.com`, `geocoding-api.open-meteo.com` | Current conditions and a 10-day forecast, for your location or a place |
+| [Todoist](todoist) | Rust | `todo`, `todo upcoming`, `todo inbox`, `todo p1`, `todo /<filter>`, `todo <new task>` | `api.todoist.com` | Your tasks; adds, completes and reschedules them |
 
 Return opens a story or package; Command-Return opens its discussion, homepage or repository in your browser.
+
+Weather and Todoist need Volant 0.3.4 or later. Weather asks once to share your approximate location
+(about 11 km) with it and Open-Meteo; `weather <place>` works without it. Weather data is by
+[Open-Meteo.com](https://open-meteo.com) (CC BY 4.0). Todoist asks once for your Todoist API token,
+which Volant keeps in your Keychain and adds only to requests to api.todoist.com; the extension never
+sees it. Type `todo` and a task, such as `todo buy milk tomorrow p1`, and Return adds it with Todoist's
+Quick Add; a task's Actions complete it or move it to tomorrow or next week, and Return opens it in
+Todoist.app, or on the web without the app.
 
 In Hacker News and Lobsters, a story's Actions (Command-K) can pin it, hide it, or hide every story
 from its domain; Show Hidden Stories brings them back, and stories you open show as read. Pinned

@@ -1,0 +1,27 @@
+{
+  "abiVersion": 1,
+  "id": "community.volant.todo",
+  "name": "Todoist",
+  "version": "0.1.0",
+  "module": "todoist.wasm",
+  "capabilities": [],
+  "hosts": [
+    "api.todoist.com"
+  ],
+  "appLinks": [
+    "todoist"
+  ],
+  "secrets": [
+    {
+      "id": "token",
+      "title": "Todoist API token",
+      "help": "Copy it from Todoist: Settings, Integrations, Developer.",
+      "host": "api.todoist.com",
+      "header": "Authorization",
+      "prefix": "Bearer "
+    }
+  ],
+  "output": "items",
+  "timeoutSeconds": 2,
+  "sha256": "33a8788fc4e511e672e18b11378e83158b1336dcfab23122c2320b3fbc49dc5b"
+}

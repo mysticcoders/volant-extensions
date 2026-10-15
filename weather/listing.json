@@ -1,0 +1,6 @@
+{
+  "summary": "Current conditions and a 10-day forecast for where you are, or for any place you type.",
+  "publisher": "Mystic Coders",
+  "license": "MIT",
+  "notes": "Weather data by Open-Meteo.com (CC BY 4.0). With location allowed, Volant sends Open-Meteo your position rounded to about ten kilometers; weather and a place name looks the place up instead and needs no location."
+}
