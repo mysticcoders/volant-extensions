@@ -127,12 +127,13 @@ To add one, give its folder a `listing.json`:
 ## Icons and trademarks
 
 An extension can show an icon in the launcher and Settings: a square WebP of at most 32 KB beside its
-manifest, named by `icon` and pinned by `iconSha256` (`./build.sh` writes the hash). Hacker News and
-Lobsters use their sites' own touch icons, converted to 128-pixel WebP. Weather, Todoist, npm and
-Wikipedia use original art drawn for these extensions (each folder's `icon.svg`, converted to a
-128-pixel lossless WebP), not the services' logos. Hacker News and the Y
-Combinator logo are trademarks of Y Combinator; the Lobsters name and logo belong to Lobsters. These
-extensions are unofficial and not endorsed by either site, and the MIT license below covers the code,
+manifest, named by `icon` and pinned by `iconSha256` (`./build.sh` writes the hash). Hacker News,
+Lobsters, Todoist and Wikipedia use their sites' own touch icons, and npm uses its logo from the npm
+organization's GitHub avatar, each converted to a 128-pixel WebP. Weather's icon is original art
+(`weather/icon.svg`). Hacker News and the Y Combinator logo are trademarks of Y Combinator; the
+Lobsters name and logo belong to Lobsters; Todoist is a trademark of Doist; npm is a trademark of
+npm, Inc., part of GitHub; Wikipedia and its logo are trademarks of the Wikimedia Foundation. These
+extensions are unofficial and not endorsed by any of them, and the MIT license below covers the code,
 not these marks.
 
 ## License
