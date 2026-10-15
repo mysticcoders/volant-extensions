@@ -116,6 +116,10 @@ pub struct Item {
     /// An action `id` that Return runs instead of opening the row's link.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub primary_action: Option<String>,
+    /// One of Volant's row symbols, such as "sun" or "rain", drawn beside the row. Volant versions
+    /// without row symbols, and names it does not know, ignore it.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub symbol: Option<String>,
 }
 
 /// A request that changes something, such as adding or completing a task. Volant sends it only from
