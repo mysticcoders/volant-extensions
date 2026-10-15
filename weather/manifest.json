@@ -14,5 +14,7 @@
   ],
   "output": "items",
   "timeoutSeconds": 2,
-  "sha256": "16a0ead305946331eee0fc122c3300411aeedc896bddf8923ef50835ebffc7e5"
+  "sha256": "16a0ead305946331eee0fc122c3300411aeedc896bddf8923ef50835ebffc7e5",
+  "icon": "icon.webp",
+  "iconSha256": "8994ca3567d4ddf2ca079ef5b856b6ff429c5216ffd5a23151f377ce01f8c7c0"
 }
