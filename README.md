@@ -14,6 +14,11 @@ Extensions for [Volant](https://usevolant.com), the macOS launcher. Each folder 
 
 Return opens a story or package; Command-Return opens its discussion, homepage or repository in your browser.
 
+In Volant 0.3.7 or later, Return on an extension enters it: the search field clears and
+belongs to the extension, with a Back chip at its start, and what you type runs it again once you pause.
+Escape clears the text, then goes back. Wikipedia and npm declare `"mode": "search"`, so they wait for
+you to type; the others show their list at once. Older Volant versions ignore `mode` and `placeholder`.
+
 Weather and Todoist need Volant 0.3.4 or later. Weather asks once to share your approximate location
 (about 11 km) with it and Open-Meteo; `weather <place>` works without it. Weather data is by
 [Open-Meteo.com](https://open-meteo.com) (CC BY 4.0). Todoist asks once for your Todoist API token,
