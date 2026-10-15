@@ -2,7 +2,7 @@
   "abiVersion": 1,
   "id": "community.volant.todo",
   "name": "Todoist",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "module": "todoist.wasm",
   "capabilities": [],
   "hosts": [
@@ -23,5 +23,7 @@
   ],
   "output": "items",
   "timeoutSeconds": 2,
-  "sha256": "33a8788fc4e511e672e18b11378e83158b1336dcfab23122c2320b3fbc49dc5b"
+  "sha256": "33a8788fc4e511e672e18b11378e83158b1336dcfab23122c2320b3fbc49dc5b",
+  "icon": "icon.webp",
+  "iconSha256": "af08ed81b80d014bec9943e1086cab790442cd8b9dbbe1cf0231e3ed73409c80"
 }
