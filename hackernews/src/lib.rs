@@ -24,8 +24,8 @@ const POINTS: &str = "points";
 const COMMENTS: &str = "comments";
 const SITE: &str = "site";
 
-/// HN's own pages: the query words that pick each one, its Algolia endpoint and tag, and whether it
-/// is limited to the last few days so popular posts rank first.
+/// HN's own pages: the query words or dropdown filter ids that pick each one, its Algolia endpoint
+/// and tag, and whether it is limited to the last few days so popular posts rank first.
 const PAGES: &[(&[&str], &str, bool)] = &[
     (&["", "top", "front"], "search?tags=front_page", false),
     (&["new", "newest"], "search_by_date?tags=story", false),
@@ -57,10 +57,18 @@ struct Hit {
     created_at_i: Option<i64>,
 }
 
-/// The Algolia request for a query: one of HN's pages from [`PAGES`], or a story search for
-/// anything else.
-pub fn url_for(query: &str, now: i64) -> String {
+/// The Algolia request for a query. With a dropdown `filter` (Volant 0.3.9 and later), the filter picks
+/// one of HN's pages and any text searches within it. Without one, the query itself may name a page
+/// from [`PAGES`], and anything else searches all stories.
+pub fn url_for(query: &str, filter: Option<&str>, now: i64) -> String {
     let query = query.trim().to_lowercase();
+    if let Some((_, path, recent)) = filter.filter(|id| !id.is_empty()).and_then(|id| PAGES.iter().find(|(words, ..)| words.contains(&id))) {
+        return match (query.is_empty(), recent) {
+            (true, true) => format!("{API}{path}&{RECENT_FILTER}{}&{FIELDS}", now - RECENT_SECONDS),
+            (true, false) => format!("{API}{path}&{FIELDS}"),
+            (false, _) => format!("{API}{path}&query={}&{FIELDS}", encode_query(&query)),
+        };
+    }
     match PAGES.iter().find(|(words, ..)| words.contains(&query.as_str())) {
         Some((_, path, true)) => format!("{API}{path}&{RECENT_FILTER}{}&{FIELDS}", now - RECENT_SECONDS),
         Some((_, path, false)) => format!("{API}{path}&{FIELDS}"),
@@ -87,7 +95,8 @@ fn handle(request: &Request) -> Result<Reply, String> {
         return change;
     }
     if request.is_plan() {
-        return Ok(Reply::Fetch(vec![url_for(&request.query, request.now)]));
+        let filter = FILTER.with(|filter| filter.borrow().clone());
+        return Ok(Reply::Fetch(vec![url_for(&request.query, filter.as_deref(), request.now)]));
     }
     let response = request.responses.first().ok_or(NOTHING)?;
     if response.status != 200 {
@@ -130,12 +139,21 @@ fn item(hit: Hit, now: i64) -> Option<Item> {
 thread_local! {
     /// Each story row's badges, by discussion link, from the request being handled.
     static BADGES: RefCell<HashMap<String, Vec<Badge>>> = RefCell::new(HashMap::new());
+    /// The dropdown filter Volant sent with the request being handled, if any.
+    static FILTER: RefCell<Option<String>> = const { RefCell::new(None) };
 }
 
+/// The part of a request the kit's `Request` does not read: the dropdown filter.
+#[derive(Deserialize)]
+struct Extra { filter: Option<String> }
+
 /// Handles a request and adds each story row's badges to the reply. The kit's rows have no badges
-/// field, so they are attached to the encoded rows by discussion link, which every story row has.
+/// field and its requests no filter, so the filter is read here and the badges are attached to the
+/// encoded rows by discussion link, which every story row has.
 pub fn respond(input: &[u8]) -> String {
     BADGES.with(|all| all.borrow_mut().clear());
+    let filter = serde_json::from_slice::<Extra>(input).ok().and_then(|extra| extra.filter);
+    FILTER.with(|current| *current.borrow_mut() = filter);
     let output = volant_extension_kit::handle(input, handle);
     let Ok(mut reply) = serde_json::from_str::<serde_json::Value>(&output) else { return output };
     BADGES.with(|all| {
@@ -159,18 +177,33 @@ mod tests {
 
     #[test]
     fn queries_choose_hn_pages_or_search() {
-        assert!(url_for("", 0).contains("tags=front_page"));
-        assert!(url_for("new", 0).starts_with("https://hn.algolia.com/api/v1/search_by_date?tags=story"));
-        assert!(url_for("ask", 1_000_000).contains("tags=ask_hn&numericFilters=created_at_i%3E740800"));
-        assert!(url_for("rust wasm", 0).contains("query=rust%20wasm"));
+        assert!(url_for("", None, 0).contains("tags=front_page"));
+        assert!(url_for("new", None, 0).starts_with("https://hn.algolia.com/api/v1/search_by_date?tags=story"));
+        assert!(url_for("ask", None, 1_000_000).contains("tags=ask_hn&numericFilters=created_at_i%3E740800"));
+        assert!(url_for("rust wasm", None, 0).contains("query=rust%20wasm"));
     }
 
     #[test]
     fn every_planned_url_is_on_a_manifest_host() {
         for query in ["", "top", "new", "ask", "show", "rust wasm", "C++ & you?"] {
-            let url = url_for(query, 1_000_000);
-            assert!(manifest_permits(MANIFEST, &url), "{url}");
+            for filter in [None, Some("top"), Some("new"), Some("ask"), Some("show"), Some("unknown")] {
+                let url = url_for(query, filter, 1_000_000);
+                assert!(manifest_permits(MANIFEST, &url), "{url}");
+            }
         }
+    }
+
+    #[test]
+    fn the_dropdown_filter_picks_the_page_and_text_searches_within_it() {
+        assert!(url_for("", Some("new"), 0).starts_with("https://hn.algolia.com/api/v1/search_by_date?tags=story&attributes"));
+        assert!(url_for("rust", Some("new"), 0).starts_with("https://hn.algolia.com/api/v1/search_by_date?tags=story&query=rust&"));
+        assert!(url_for("rust", Some("ask"), 1_000_000).contains("tags=ask_hn&query=rust&"));
+        assert!(!url_for("rust", Some("ask"), 1_000_000).contains("numericFilters"), "A search covers all time");
+        assert!(url_for("", Some("ask"), 1_000_000).contains("numericFilters=created_at_i%3E740800"));
+        assert!(url_for("new", Some("top"), 0).contains("tags=front_page&query=new"), "With a filter, page words are search text");
+        assert_eq!(url_for("new", Some("unknown"), 0), url_for("new", None, 0), "An unknown filter acts like none");
+        let output = respond(br#"{"phase":"plan","query":"wasm","now":0,"filter":"show"}"#);
+        assert!(output.contains("tags=show_hn&query=wasm"), "{output}");
     }
 
     #[test]
