@@ -2,7 +2,7 @@
   "abiVersion": 1,
   "id": "community.volant.hn",
   "name": "Hacker News",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "module": "hackernews.wasm",
   "capabilities": [],
   "hosts": [
@@ -10,8 +10,28 @@
   ],
   "output": "items",
   "timeoutSeconds": 2,
-  "sha256": "49fd5f3df6a129ef81edf786de05695a90e1295be6a1bf49a474e8f0783cf584",
+  "sha256": "aa0a4bcb1647a47bc383cf25ac456bf8e4ababda1bf139378df7793a64f1b95a",
   "icon": "icon.webp",
   "iconSha256": "5825e955d26f1a35304414f5984a9a7871621311ead9e9fc2ca43600ef54663b",
-  "storage": true
+  "storage": true,
+  "mode": "list",
+  "placeholder": "Search Hacker News",
+  "filters": [
+    {
+      "id": "top",
+      "title": "Top"
+    },
+    {
+      "id": "new",
+      "title": "New"
+    },
+    {
+      "id": "ask",
+      "title": "Ask HN"
+    },
+    {
+      "id": "show",
+      "title": "Show HN"
+    }
+  ]
 }

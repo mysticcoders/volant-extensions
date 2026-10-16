@@ -16,7 +16,9 @@ Return opens a story or package; Command-Return opens its discussion, homepage o
 
 In Volant 0.3.7 or later, Return on an extension enters it: the search field clears and
 belongs to the extension, with a Back chip at its start, and what you type runs it again once you pause.
-Escape clears the text, then goes back. Wikipedia and npm declare `"mode": "search"`, so they wait for
+Escape clears the text, then goes back. Hacker News adds a dropdown at the end of the field (Top, New,
+Ask HN, Show HN; Command-P picks the next one) and searches within the chosen page, and shows each
+story's points, comments and site as badges. Wikipedia and npm declare `"mode": "search"`, so they wait for
 you to type; the others show their list at once. Older Volant versions ignore `mode` and `placeholder`.
 
 Weather and Todoist need Volant 0.3.4 or later. Weather asks once to share your approximate location

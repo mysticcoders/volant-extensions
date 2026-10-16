@@ -306,3 +306,28 @@ mod tests {
         assert_eq!(encode_query("rust & wasm"), "rust%20%26%20wasm");
     }
 }
+
+/// Exports `alloc` and `run` for ABI 1 around a function that turns the raw request into the reply
+/// text, for an extension that adds to the JSON [`handle`] produces.
+#[macro_export]
+macro_rules! volant_extension_output {
+    ($respond:path) => {
+        #[no_mangle]
+        pub extern "C" fn alloc(len: usize) -> *mut u8 {
+            let mut buffer = vec![0u8; len.max(1)].into_boxed_slice();
+            let ptr = buffer.as_mut_ptr();
+            std::mem::forget(buffer);
+            ptr
+        }
+
+        #[no_mangle]
+        pub extern "C" fn run(ptr: *const u8, len: usize) -> *const u8 {
+            let input = unsafe { std::slice::from_raw_parts(ptr, len) };
+            let output: String = $respond(input);
+            let mut record = Vec::with_capacity(4 + output.len());
+            record.extend_from_slice(&(output.len() as u32).to_le_bytes());
+            record.extend_from_slice(output.as_bytes());
+            Box::leak(record.into_boxed_slice()).as_ptr()
+        }
+    };
+}
