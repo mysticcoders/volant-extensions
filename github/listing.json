@@ -1,0 +1,6 @@
+{
+  "summary": "Pull requests waiting for your review, your own pull requests, and issues assigned to or involving you, searchable from the launcher.",
+  "publisher": "Mystic Coders",
+  "license": "MIT",
+  "notes": "Uses your GitHub personal access token, which Volant keeps in your Keychain and adds to requests to api.github.com itself; the extension never sees it. Not affiliated with GitHub."
+}

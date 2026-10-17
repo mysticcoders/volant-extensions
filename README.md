@@ -10,13 +10,20 @@ Extensions for [Volant](https://usevolant.com), the macOS launcher. Each folder 
 | [npm](npm) | TypeScript | `npm <search>` | `registry.npmjs.org` | Packages matching a name or keyword |
 | [Wikipedia](wikipedia) | Python | `wiki <search>` | `en.wikipedia.org` | English Wikipedia articles matching a topic |
 | [Weather](weather) | Rust | `weather`, `weather <place>` | `api.open-meteo.com`, `geocoding-api.open-meteo.com` | Current conditions and a 10-day forecast, for your location or a place |
+| [GitHub](github) | Rust | `github`, `github <search>` | `api.github.com` | Pull requests to review, your pull requests, and issues assigned to or involving you |
+| [Homebrew](homebrew) | Rust | `homebrew <name>` | `formulae.brew.sh` | A formula or cask by exact name, with its install command |
 | [Todoist](todoist) | Rust | `todo`, `todo upcoming`, `todo inbox`, `todo p1`, `todo /<filter>`, `todo <new task>` | `api.todoist.com` | Your tasks; adds, completes and reschedules them |
 
 Return opens a story or package; Command-Return opens its discussion, homepage or repository in your browser.
 
 In Volant 0.3.7 or later, Return on an extension enters it: the search field clears and
 belongs to the extension, with a Back chip at its start, and what you type runs it again once you pause.
-Escape clears the text, then goes back. Hacker News adds a dropdown at the end of the field (Top, New,
+Escape clears the text, then goes back. GitHub (Volant 0.3.9 or later for its dropdown) asks once for a
+fine-grained personal access token with read access to pull requests and issues, kept in your Keychain
+and added only to requests to api.github.com; its dropdown picks Review Requests, My Pull Requests,
+Assigned to Me or Involving Me, and typed text narrows the list with GitHub's search syntax, such as
+`repo:owner/name`. Homebrew looks up the exact formula or cask name you type, since Homebrew has no
+search API; Return on its install row copies `brew install …`. Hacker News adds a dropdown at the end of the field (Top, New,
 Ask HN, Show HN; Command-P picks the next one) and searches within the chosen page, and shows each
 story's points, comments and site as badges. Wikipedia and npm declare `"mode": "search"`, so they wait for
 you to type; the others show their list at once. Older Volant versions ignore `mode` and `placeholder`.
@@ -134,11 +141,12 @@ To add one, give its folder a `listing.json`:
 ## Icons and trademarks
 
 An extension can show an icon in the launcher and Settings: a square WebP of at most 32 KB beside its
-manifest, named by `icon` and pinned by `iconSha256` (`./build.sh` writes the hash). Hacker News,
-Lobsters, Todoist and Wikipedia use their sites' own touch icons, and npm uses its logo from the npm
+manifest, named by `icon` and pinned by `iconSha256` (`./build.sh` writes the hash). GitHub, Hacker News,
+Homebrew, Lobsters, Todoist and Wikipedia use their sites' own touch icons, and npm uses its logo from the npm
 organization's GitHub avatar, each converted to a 128-pixel WebP. Weather's icon is original art
 (`weather/icon.svg`). Hacker News and the Y Combinator logo are trademarks of Y Combinator; the
-Lobsters name and logo belong to Lobsters; Todoist is a trademark of Doist; npm is a trademark of
+Lobsters name and logo belong to Lobsters; Todoist is a trademark of Doist; GitHub and the Invertocat logo are trademarks of GitHub, Inc.; the
+Homebrew name and logo belong to the Homebrew project; npm is a trademark of
 npm, Inc., part of GitHub; Wikipedia and its logo are trademarks of the Wikimedia Foundation. These
 extensions are unofficial and not endorsed by any of them, and the MIT license below covers the code,
 not these marks.

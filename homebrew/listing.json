@@ -1,0 +1,6 @@
+{
+  "summary": "Look up a Homebrew formula or cask by name: what it is, its version and installs, and its install command ready to copy.",
+  "publisher": "Mystic Coders",
+  "license": "MIT",
+  "notes": "Reads formulae.brew.sh. Homebrew has no search API, so type the exact formula or cask name. Not affiliated with Homebrew."
+}

@@ -1,0 +1,46 @@
+{
+  "abiVersion": 1,
+  "id": "community.volant.github",
+  "name": "GitHub",
+  "version": "0.1.0",
+  "module": "github.wasm",
+  "capabilities": [],
+  "hosts": [
+    "api.github.com"
+  ],
+  "secrets": [
+    {
+      "id": "token",
+      "title": "GitHub personal access token",
+      "help": "Create a fine-grained token at github.com/settings/personal-access-tokens with read access to Pull requests and Issues.",
+      "host": "api.github.com",
+      "header": "Authorization",
+      "prefix": "Bearer "
+    }
+  ],
+  "output": "items",
+  "timeoutSeconds": 2,
+  "sha256": "26fa19ca2de1f500091af1fb2ab5908d22e3753231a9a43c8b38b3182564465e",
+  "icon": "icon.webp",
+  "iconSha256": "9303e582d036e2ae9c1b84c4ccea1a1a4af99a38c6b22d34d3e20bd0e74f6b36",
+  "mode": "list",
+  "placeholder": "Search GitHub",
+  "filters": [
+    {
+      "id": "review",
+      "title": "Review Requests"
+    },
+    {
+      "id": "mine",
+      "title": "My Pull Requests"
+    },
+    {
+      "id": "assigned",
+      "title": "Assigned to Me"
+    },
+    {
+      "id": "involved",
+      "title": "Involving Me"
+    }
+  ]
+}
