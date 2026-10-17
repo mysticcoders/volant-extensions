@@ -1,0 +1,18 @@
+{
+  "abiVersion": 1,
+  "id": "community.volant.brew",
+  "name": "Homebrew",
+  "version": "0.1.0",
+  "module": "homebrew.wasm",
+  "capabilities": [],
+  "hosts": [
+    "formulae.brew.sh"
+  ],
+  "output": "items",
+  "timeoutSeconds": 2,
+  "sha256": "7de9e7f4db49990932871a04e12a2d4550083bfec838a3cdd69bd1c4844b9f62",
+  "icon": "icon.webp",
+  "iconSha256": "f9d2c928219a5b4b33bab084c3f2660c82c26c37008a08d4515a4ccfdf714144",
+  "mode": "search",
+  "placeholder": "Formula or cask name, such as wget"
+}
