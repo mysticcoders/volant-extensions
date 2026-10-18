@@ -7,6 +7,10 @@ catalog.json.sig (base64) and publishes the site to GitHub Pages. Volant derives
 ID, version and file names rather than trusting paths in the index, and checks every byte against the
 sizes and hashes listed here. Volant 0.3.0 ignores the icon fields and downloads only the other two files.
 
+revoked.json, when present, lists withdrawn extensions as [{"id", "sha256"?, "reason"?}]: without sha256
+every version of the ID is revoked, with it only that module. Volant turns off installed copies that
+match and refuses to enable or install them. A revoked listing is left out of the catalog.
+
 Usage: tools/catalog.py OUT_DIR
 """
 import hashlib
@@ -23,6 +27,8 @@ VERSION = re.compile(r"^[0-9A-Za-z.+-]{1,32}$")
 MODULE = re.compile(r"^[A-Za-z0-9_-]{1,64}\.wasm$")
 ICON = re.compile(r"^[A-Za-z0-9_-]{1,64}\.webp$")
 MAX_ICON_BYTES = 32768
+SHA256 = re.compile(r"^[0-9a-f]{64}$")
+MAX_REVOCATIONS = 256
 
 
 def git(*args):
@@ -33,12 +39,37 @@ def entry(data):
     return {"sha256": hashlib.sha256(data).hexdigest(), "size": len(data)}
 
 
+def load_revocations(root):
+    path = root / "revoked.json"
+    if not path.exists():
+        return []
+    revoked = json.loads(path.read_text())
+    if not isinstance(revoked, list) or len(revoked) > MAX_REVOCATIONS:
+        sys.exit(f"revoked.json must be a list of at most {MAX_REVOCATIONS} entries")
+    for item in revoked:
+        if not isinstance(item, dict) or set(item) - {"id", "sha256", "reason"}:
+            sys.exit(f"revoked.json: unexpected entry {item!r}")
+        ident, digest, reason = item.get("id"), item.get("sha256"), item.get("reason")
+        if not (isinstance(ident, str) and ID.match(ident) and len(ident) <= 128):
+            sys.exit(f"revoked.json: {ident!r} is not a catalog-safe id")
+        if digest is not None and not (isinstance(digest, str) and SHA256.match(digest)):
+            sys.exit(f"revoked.json: {ident} sha256 must be 64 lowercase hex characters")
+        if reason is not None and not (isinstance(reason, str) and len(reason) <= 300):
+            sys.exit(f"revoked.json: {ident} reason must be text of at most 300 characters")
+    return revoked
+
+
+def is_revoked(revoked, ident, digest):
+    return any(item["id"] == ident and item.get("sha256") in (None, digest) for item in revoked)
+
+
 def main(out):
     root = pathlib.Path(__file__).resolve().parent.parent
     revision = git("rev-parse", "HEAD")
     site = pathlib.Path(out)
     if site.exists():
         shutil.rmtree(site)
+    revoked = load_revocations(root)
     listings = []
     for listing_path in sorted(root.glob("*/listing.json")):
         folder = listing_path.parent
@@ -51,6 +82,9 @@ def main(out):
         module_bytes = (folder / module).read_bytes()
         if hashlib.sha256(module_bytes).hexdigest() != manifest["sha256"]:
             sys.exit(f"{folder.name}: manifest sha256 does not match {module}")
+        if is_revoked(revoked, ident, manifest["sha256"]):
+            print(f"{folder.name}: revoked, not listed")
+            continue
         package = site / "packages" / ident / version
         package.mkdir(parents=True)
         (package / "manifest.json").write_bytes(manifest_bytes)
@@ -82,11 +116,13 @@ def main(out):
         "generated": git("show", "-s", "--format=%cI", "HEAD"),
         "revision": revision,
         "extensions": listings,
+        **({"revoked": revoked} if revoked else {}),
     }
     site.mkdir(parents=True, exist_ok=True)
     (site / "catalog.json").write_text(json.dumps(catalog, indent=2, sort_keys=True) + "\n")
     (site / ".nojekyll").write_text("")
-    print(f"catalog {catalog['sequence']} at {revision[:12]}: " + ", ".join(f"{i['id']} {i['version']}" for i in listings))
+    print(f"catalog {catalog['sequence']} at {revision[:12]}: " + ", ".join(f"{i['id']} {i['version']}" for i in listings)
+          + (f"; {len(revoked)} revoked" if revoked else ""))
 
 
 if __name__ == "__main__":
