@@ -131,6 +131,17 @@ site with `tools/catalog.py` (every folder with a `listing.json` is listed), sig
 whose signature fails or whose `sequence` (the commit count of `main`) is older than one it accepted,
 and checks every downloaded file against the sizes and SHA-256 hashes in the signed index.
 
+To withdraw an extension, add it to `revoked.json` at the repository root:
+
+```json
+[{ "id": "community.volant.hn", "sha256": "<module sha256>", "reason": "One sentence the owner sees." }]
+```
+
+Leave out `sha256` to revoke every version of the ID. The catalog then publishes the list and stops
+listing matching versions. Volant versions that read it turn off installed copies the next time their
+owner checks the catalog, show the reason, and refuse to enable or reinstall them; updating past the
+revoked module clears it.
+
 Merging to `main` publishes, so review an extension's source, hosts and license before merging it.
 To add one, give its folder a `listing.json`:
 
