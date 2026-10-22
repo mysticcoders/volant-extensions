@@ -3,7 +3,7 @@
 
 The module must match the manifest's sha256 and be at most 2 MiB, with one non-shared wasm32 memory
 whose explicit maximum is at most 16 MiB. ABI 1 modules export `memory`, `alloc` and `run` and may
-import only the `vey` functions their capabilities grant; ABI 2 modules export `memory` and `_start`
+import only the `volant` functions their capabilities grant; ABI 2 modules export `memory` and `_start`
 and may import only Volant's restricted set of WASI preview 1 functions. Volant checks all of this
 again at run time; this script catches a bad module before it is committed or published. An optional
 `icon` must be a square-named `.webp` of at most 32 KB beside the manifest, pinned by `iconSha256`.
@@ -23,7 +23,7 @@ MAX_MEMORY_PAGES = 256
 WASM_MAGIC = b"\0asm\1\0\0\0"
 IMPORT_SECTION, MEMORY_SECTION, EXPORT_SECTION = 2, 5, 7
 FUNCTION_KIND, TABLE_KIND, MEMORY_KIND, GLOBAL_KIND, TAG_KIND = 0, 1, 2, 3, 4
-ABI1_NAMESPACE = "vey"
+ABI1_NAMESPACE = "volant"
 ABI1_CAPABILITY_IMPORTS = {"log": "log", "clipboard_write": "clipboard.write"}
 ABI1_EXPORTS = {"memory", "alloc", "run"}
 WASI_NAMESPACE = "wasi_snapshot_preview1"
