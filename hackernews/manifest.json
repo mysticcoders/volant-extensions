@@ -2,7 +2,7 @@
   "abiVersion": 1,
   "id": "community.volant.hn",
   "name": "Hacker News",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "module": "hackernews.wasm",
   "capabilities": [],
   "hosts": [
@@ -10,7 +10,7 @@
   ],
   "output": "items",
   "timeoutSeconds": 2,
-  "sha256": "aa0a4bcb1647a47bc383cf25ac456bf8e4ababda1bf139378df7793a64f1b95a",
+  "sha256": "fcd90200bdab1f99ae4c7b2fe709eb1fbc64d5c7fe6bdaec086c1468092a79c9",
   "icon": "icon.webp",
   "iconSha256": "5825e955d26f1a35304414f5984a9a7871621311ead9e9fc2ca43600ef54663b",
   "storage": true,
@@ -32,6 +32,33 @@
     {
       "id": "show",
       "title": "Show HN"
+    }
+  ],
+  "preferences": [
+    {
+      "id": "limit",
+      "type": "number",
+      "title": "Stories to show",
+      "description": "How many stories to load at once",
+      "default": 30,
+      "min": 10,
+      "max": 50
+    },
+    {
+      "id": "minimumPoints",
+      "type": "number",
+      "title": "Minimum points",
+      "description": "Hide stories with fewer points; 0 shows all",
+      "default": 0,
+      "min": 0,
+      "max": 1000
+    },
+    {
+      "id": "showBadges",
+      "type": "toggle",
+      "title": "Show points and comments",
+      "description": "Adds each story's points, comment count and site to its row",
+      "default": true
     }
   ]
 }

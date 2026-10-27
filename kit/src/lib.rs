@@ -7,6 +7,11 @@
 //!
 //! Extensions whose manifest sets `"storage": true` also receive the JSON object they last saved, and
 //! rows can offer actions; see [`reader`] for the pins, hidden stories and read state the readers keep.
+//!
+//! Extensions that declare `preferences` in their manifest receive the owner's values as `"preferences"`
+//! (Volant 0.3.22 and later), one entry per declared id. Read them with [`Preferences::from_input`] and
+//! its `bool`, `number` and `string` readers, whose defaults also apply on older Volant versions, which
+//! send none.
 use serde::{Deserialize, Serialize};
 
 pub mod reader;
@@ -52,6 +57,39 @@ pub struct Request {
     /// The state a previous round returned with [`Reply::Continue`], in a later `render`.
     #[serde(default)]
     pub state: Option<String>,
+}
+
+/// The owner's values for the manifest's declared preferences, every declared id included with
+/// Volant's defaults filled in, read from the raw request with [`Preferences::from_input`]. Volant
+/// versions before 0.3.22 send none, so every reader falls back to the default the caller passes. Kept
+/// apart from [`Request`] so extensions that declare no preferences compile to the same module.
+#[derive(Deserialize, Default, Debug, Clone, PartialEq)]
+pub struct Preferences {
+    #[serde(default)]
+    preferences: serde_json::Map<String, serde_json::Value>,
+}
+
+impl Preferences {
+    /// The preferences in a request's JSON, or none when it has no `preferences` object.
+    pub fn from_input(input: &[u8]) -> Preferences {
+        serde_json::from_slice(input).unwrap_or_default()
+    }
+
+    /// A toggle preference, or `default` when it is missing or not a boolean.
+    pub fn bool(&self, id: &str, default: bool) -> bool {
+        self.preferences.get(id).and_then(serde_json::Value::as_bool).unwrap_or(default)
+    }
+
+    /// A number preference, or `default` when it is missing or not a number. Volant has already checked
+    /// it against the manifest's `min` and `max`.
+    pub fn number(&self, id: &str, default: f64) -> f64 {
+        self.preferences.get(id).and_then(serde_json::Value::as_f64).unwrap_or(default)
+    }
+
+    /// A text or dropdown preference, or `default` when it is missing or not a string.
+    pub fn string<'a>(&'a self, id: &str, default: &'a str) -> &'a str {
+        self.preferences.get(id).and_then(serde_json::Value::as_str).unwrap_or(default)
+    }
 }
 
 /// Where the owner is, rounded by Volant to about ten kilometers.
@@ -264,6 +302,18 @@ pub fn parse_rfc3339(text: &str) -> Option<i64> {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn preferences_read_with_defaults_for_older_volant() {
+        let preferences = Preferences::from_input(br#"{"phase":"plan","query":"","now":0,"preferences":{"limit":12,"showScores":false,"sort":"new"}}"#);
+        assert_eq!(preferences.number("limit", 30.0), 12.0);
+        assert!(!preferences.bool("showScores", true));
+        assert_eq!(preferences.string("sort", "top"), "new");
+        assert_eq!(preferences.string("limit", "fallback"), "fallback", "A different type falls back");
+        let older = Preferences::from_input(br#"{"phase":"plan","query":"","now":0}"#);
+        assert_eq!(older.number("limit", 30.0), 30.0);
+        assert!(older.bool("showScores", true));
+    }
+
     use super::*;
 
     #[test]

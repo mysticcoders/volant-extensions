@@ -90,6 +90,43 @@ and opening a row with `onOpen` sends `{"phase":"opened","item":…}`; neither f
 `{"storage":…}` saves it and Volant runs the list again. `kit::reader` implements the pins, hidden
 stories and domains, and read state both readers use, with every list capped well under the limit.
 
+## Preferences
+
+A list extension can declare settings the owner chooses in Volant's Settings › Extensions ›
+**Preferences…** (Volant 0.3.22 and later): up to 12 of `toggle`, `text`, `dropdown` and `number`.
+
+```json
+"preferences": [
+  {"id": "limit", "type": "number", "title": "Stories to show", "default": 30, "min": 10, "max": 50},
+  {"id": "showBadges", "type": "toggle", "title": "Show points and comments", "default": true}
+]
+```
+
+Every list request then carries `"preferences"` with each declared id: the owner's choice, or the
+default until they pick one. Volant checks values against the declaration (type, range, choices,
+length) before sending them. Older Volant versions send no `preferences`, so always fall back to the
+same defaults the manifest declares; then an extension behaves the same everywhere until the owner
+changes something.
+
+In Rust, read them with `kit::Preferences`, kept apart from `Request` so extensions without
+preferences compile unchanged:
+
+```rust
+let preferences = volant_extension_kit::Preferences::from_input(input);
+let limit = preferences.number("limit", 30.0) as usize;
+let show_badges = preferences.bool("showBadges", true);
+```
+
+In TypeScript, read `request.preferences?.limit ?? 30`. Hacker News is the worked example: story count,
+a minimum score and whether rows show badges.
+
+Preferences are the owner's settings, not access. They can't add hosts, and they must never hold a
+password or token: declare a `secret` for that, which Volant keeps in the Keychain and never passes to
+the module. Values are stored in Volant's config.json, included in Volant backups, never synced through
+iCloud, and removed when the extension is uninstalled. Declaring or changing preferences doesn't switch
+an enabled extension off on update. The full rules are in Volant's
+[docs/extension-preferences.md](https://github.com/mysticcoders/volant/blob/main/docs/extension-preferences.md).
+
 ## Build
 
 ```sh
