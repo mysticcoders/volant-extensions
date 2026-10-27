@@ -3,15 +3,20 @@
 //! opens the story; Command-Return, or Open Comments in its Actions, opens its discussion on
 //! news.ycombinator.com in the browser. Stories can be pinned or hidden, as can whole domains, and
 //! opened stories show as read; all of it is saved on this Mac through Volant's extension storage.
+//! Its preferences (Volant 0.3.22 and later) set how many stories to fetch, a minimum score, and whether
+//! rows show their points, comments and site; the defaults match earlier versions exactly.
 use serde::{Deserialize, Serialize};
 use volant_extension_kit::reader::{handle_change, State, Story};
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-use volant_extension_kit::{age, domain, encode_query, is_web_link, volant_extension_output, Item, Reply, Request, DISCUSSION_TITLE};
+use volant_extension_kit::{age, domain, encode_query, is_web_link, volant_extension_output, Item, Preferences, Reply, Request, DISCUSSION_TITLE};
 
 const API: &str = "https://hn.algolia.com/api/v1/";
-const FIELDS: &str = "attributesToRetrieve=title,url,points,num_comments,author,created_at_i,objectID&attributesToHighlight=none&hitsPerPage=30";
+const FIELDS: &str = "attributesToRetrieve=title,url,points,num_comments,author,created_at_i,objectID&attributesToHighlight=none&hitsPerPage=";
+/// The `limit` preference's default and range; the manifest declares the same.
+pub const DEFAULT_LIMIT: usize = 30;
+const LIMIT_RANGE: std::ops::RangeInclusive<usize> = 10..=50;
 const SEARCH: &str = "search?tags=story&query=";
 const RECENT_FILTER: &str = "numericFilters=created_at_i%3E";
 const RECENT_SECONDS: i64 = 3 * 86_400;
@@ -57,22 +62,23 @@ struct Hit {
     created_at_i: Option<i64>,
 }
 
-/// The Algolia request for a query. With a dropdown `filter` (Volant 0.3.9 and later), the filter picks
-/// one of HN's pages and any text searches within it. Without one, the query itself may name a page
-/// from [`PAGES`], and anything else searches all stories.
-pub fn url_for(query: &str, filter: Option<&str>, now: i64) -> String {
+/// The Algolia request for a query, asking for `limit` stories (kept within 10–50). With a dropdown
+/// `filter` (Volant 0.3.9 and later), the filter picks one of HN's pages and any text searches within it.
+/// Without one, the query itself may name a page from [`PAGES`], and anything else searches all stories.
+pub fn url_for(query: &str, filter: Option<&str>, now: i64, limit: usize) -> String {
+    let fields = format!("{FIELDS}{}", limit.clamp(*LIMIT_RANGE.start(), *LIMIT_RANGE.end()));
     let query = query.trim().to_lowercase();
     if let Some((_, path, recent)) = filter.filter(|id| !id.is_empty()).and_then(|id| PAGES.iter().find(|(words, ..)| words.contains(&id))) {
         return match (query.is_empty(), recent) {
-            (true, true) => format!("{API}{path}&{RECENT_FILTER}{}&{FIELDS}", now - RECENT_SECONDS),
-            (true, false) => format!("{API}{path}&{FIELDS}"),
-            (false, _) => format!("{API}{path}&query={}&{FIELDS}", encode_query(&query)),
+            (true, true) => format!("{API}{path}&{RECENT_FILTER}{}&{fields}", now - RECENT_SECONDS),
+            (true, false) => format!("{API}{path}&{fields}"),
+            (false, _) => format!("{API}{path}&query={}&{fields}", encode_query(&query)),
         };
     }
     match PAGES.iter().find(|(words, ..)| words.contains(&query.as_str())) {
-        Some((_, path, true)) => format!("{API}{path}&{RECENT_FILTER}{}&{FIELDS}", now - RECENT_SECONDS),
-        Some((_, path, false)) => format!("{API}{path}&{FIELDS}"),
-        None => format!("{API}{SEARCH}{}&{FIELDS}", encode_query(&query)),
+        Some((_, path, true)) => format!("{API}{path}&{RECENT_FILTER}{}&{fields}", now - RECENT_SECONDS),
+        Some((_, path, false)) => format!("{API}{path}&{fields}"),
+        None => format!("{API}{SEARCH}{}&{fields}", encode_query(&query)),
     }
 }
 
@@ -96,14 +102,17 @@ fn handle(request: &Request) -> Result<Reply, String> {
     }
     if request.is_plan() {
         let filter = FILTER.with(|filter| filter.borrow().clone());
-        return Ok(Reply::Fetch(vec![url_for(&request.query, filter.as_deref(), request.now)]));
+        let limit = PREFERENCES.with(|p| p.borrow().number("limit", DEFAULT_LIMIT as f64)) as usize;
+        return Ok(Reply::Fetch(vec![url_for(&request.query, filter.as_deref(), request.now, limit)]));
     }
     let response = request.responses.first().ok_or(NOTHING)?;
     if response.status != 200 {
         return Err(unavailable(response.status));
     }
     let page: Page = serde_json::from_str(&response.body).map_err(|_| UNREADABLE.to_string())?;
-    let stories = page.hits.into_iter().filter_map(|hit| item(hit, request.now)).filter_map(|item| {
+    let minimum = PREFERENCES.with(|p| p.borrow().number("minimumPoints", 0.0)) as i64;
+    let hits = page.hits.into_iter().filter(|hit| minimum <= 0 || hit.points.unwrap_or(0) >= minimum);
+    let stories = hits.filter_map(|hit| item(hit, request.now)).filter_map(|item| {
         let key = item.secondary_url.as_deref().and_then(key_of)?;
         Some(Story { key, domain: item.url.as_deref().and_then(story_domain), item })
     }).collect();
@@ -141,6 +150,8 @@ thread_local! {
     static BADGES: RefCell<HashMap<String, Vec<Badge>>> = RefCell::new(HashMap::new());
     /// The dropdown filter Volant sent with the request being handled, if any.
     static FILTER: RefCell<Option<String>> = const { RefCell::new(None) };
+    /// The owner's preferences sent with the request being handled; empty from Volant before 0.3.22.
+    static PREFERENCES: RefCell<Preferences> = RefCell::new(Preferences::default());
 }
 
 /// The part of a request the kit's `Request` does not read: the dropdown filter.
@@ -154,7 +165,11 @@ pub fn respond(input: &[u8]) -> String {
     BADGES.with(|all| all.borrow_mut().clear());
     let filter = serde_json::from_slice::<Extra>(input).ok().and_then(|extra| extra.filter);
     FILTER.with(|current| *current.borrow_mut() = filter);
+    let preferences = Preferences::from_input(input);
+    let show_badges = preferences.bool("showBadges", true);
+    PREFERENCES.with(|current| *current.borrow_mut() = preferences);
     let output = volant_extension_kit::handle(input, handle);
+    if !show_badges { return output; }
     let Ok(mut reply) = serde_json::from_str::<serde_json::Value>(&output) else { return output };
     BADGES.with(|all| {
         let all = all.borrow();
@@ -177,17 +192,17 @@ mod tests {
 
     #[test]
     fn queries_choose_hn_pages_or_search() {
-        assert!(url_for("", None, 0).contains("tags=front_page"));
-        assert!(url_for("new", None, 0).starts_with("https://hn.algolia.com/api/v1/search_by_date?tags=story"));
-        assert!(url_for("ask", None, 1_000_000).contains("tags=ask_hn&numericFilters=created_at_i%3E740800"));
-        assert!(url_for("rust wasm", None, 0).contains("query=rust%20wasm"));
+        assert!(url_for("", None, 0, DEFAULT_LIMIT).contains("tags=front_page"));
+        assert!(url_for("new", None, 0, DEFAULT_LIMIT).starts_with("https://hn.algolia.com/api/v1/search_by_date?tags=story"));
+        assert!(url_for("ask", None, 1_000_000, DEFAULT_LIMIT).contains("tags=ask_hn&numericFilters=created_at_i%3E740800"));
+        assert!(url_for("rust wasm", None, 0, DEFAULT_LIMIT).contains("query=rust%20wasm"));
     }
 
     #[test]
     fn every_planned_url_is_on_a_manifest_host() {
         for query in ["", "top", "new", "ask", "show", "rust wasm", "C++ & you?"] {
             for filter in [None, Some("top"), Some("new"), Some("ask"), Some("show"), Some("unknown")] {
-                let url = url_for(query, filter, 1_000_000);
+                let url = url_for(query, filter, 1_000_000, DEFAULT_LIMIT);
                 assert!(manifest_permits(MANIFEST, &url), "{url}");
             }
         }
@@ -195,13 +210,13 @@ mod tests {
 
     #[test]
     fn the_dropdown_filter_picks_the_page_and_text_searches_within_it() {
-        assert!(url_for("", Some("new"), 0).starts_with("https://hn.algolia.com/api/v1/search_by_date?tags=story&attributes"));
-        assert!(url_for("rust", Some("new"), 0).starts_with("https://hn.algolia.com/api/v1/search_by_date?tags=story&query=rust&"));
-        assert!(url_for("rust", Some("ask"), 1_000_000).contains("tags=ask_hn&query=rust&"));
-        assert!(!url_for("rust", Some("ask"), 1_000_000).contains("numericFilters"), "A search covers all time");
-        assert!(url_for("", Some("ask"), 1_000_000).contains("numericFilters=created_at_i%3E740800"));
-        assert!(url_for("new", Some("top"), 0).contains("tags=front_page&query=new"), "With a filter, page words are search text");
-        assert_eq!(url_for("new", Some("unknown"), 0), url_for("new", None, 0), "An unknown filter acts like none");
+        assert!(url_for("", Some("new"), 0, DEFAULT_LIMIT).starts_with("https://hn.algolia.com/api/v1/search_by_date?tags=story&attributes"));
+        assert!(url_for("rust", Some("new"), 0, DEFAULT_LIMIT).starts_with("https://hn.algolia.com/api/v1/search_by_date?tags=story&query=rust&"));
+        assert!(url_for("rust", Some("ask"), 1_000_000, DEFAULT_LIMIT).contains("tags=ask_hn&query=rust&"));
+        assert!(!url_for("rust", Some("ask"), 1_000_000, DEFAULT_LIMIT).contains("numericFilters"), "A search covers all time");
+        assert!(url_for("", Some("ask"), 1_000_000, DEFAULT_LIMIT).contains("numericFilters=created_at_i%3E740800"));
+        assert!(url_for("new", Some("top"), 0, DEFAULT_LIMIT).contains("tags=front_page&query=new"), "With a filter, page words are search text");
+        assert_eq!(url_for("new", Some("unknown"), 0, DEFAULT_LIMIT), url_for("new", None, 0, DEFAULT_LIMIT), "An unknown filter acts like none");
         let output = respond(br#"{"phase":"plan","query":"wasm","now":0,"filter":"show"}"#);
         assert!(output.contains("tags=show_hn&query=wasm"), "{output}");
     }
@@ -262,6 +277,36 @@ mod tests {
         let opened = serde_json::json!({"phase":"opened","query":"","now":0,"item":row});
         let saved: serde_json::Value = serde_json::from_str(&run(opened.to_string().as_bytes(), handle)).unwrap();
         assert_eq!(saved["storage"]["read"], serde_json::json!(["1"]));
+    }
+
+    #[test]
+    fn preferences_set_the_count_the_minimum_score_and_badges() {
+        let plan = |preferences: serde_json::Value| respond(serde_json::json!({"phase":"plan","query":"","now":0,"preferences":preferences}).to_string().as_bytes());
+        assert!(respond(br#"{"phase":"plan","query":"","now":0}"#).contains("hitsPerPage=30"), "Older Volant sends no preferences; nothing changes");
+        assert!(plan(serde_json::json!({"limit":12})).contains("hitsPerPage=12"));
+        assert!(plan(serde_json::json!({"limit":500})).contains("hitsPerPage=50"), "Kept within the declared range");
+        let body = r#"{"hits":[{"objectID":"1","title":"Popular","url":"https://example.com/a","points":150,"num_comments":3},
+                               {"objectID":"2","title":"Quiet","url":"https://example.com/b","points":4,"num_comments":0},
+                               {"objectID":"3","title":"Unscored","url":"https://example.com/c"}]}"#;
+        let render = |preferences: serde_json::Value| -> serde_json::Value {
+            let request = serde_json::json!({"phase":"render","query":"","now":0,"responses":[{"url":"u","status":200,"body":body}],"preferences":preferences});
+            serde_json::from_str(&respond(request.to_string().as_bytes())).unwrap()
+        };
+        let titles = |value: &serde_json::Value| value["items"].as_array().unwrap().iter().map(|item| item["title"].as_str().unwrap().to_string()).collect::<Vec<_>>();
+        assert_eq!(titles(&render(serde_json::json!({}))), ["Popular", "Quiet", "Unscored"]);
+        assert_eq!(titles(&render(serde_json::json!({"minimumPoints":100}))), ["Popular"]);
+        let plain = render(serde_json::json!({"showBadges":false}));
+        assert!(plain["items"][0].get("badges").is_none(), "Badges off leaves rows without points, comments or site");
+        assert!(render(serde_json::json!({}))["items"][0].get("badges").is_some());
+    }
+
+    #[test]
+    fn the_manifest_declares_the_preferences_the_module_reads() {
+        let manifest: serde_json::Value = serde_json::from_str(MANIFEST).unwrap();
+        let ids: Vec<&str> = manifest["preferences"].as_array().unwrap().iter().map(|p| p["id"].as_str().unwrap()).collect();
+        assert_eq!(ids, ["limit", "minimumPoints", "showBadges"]);
+        let limit = &manifest["preferences"][0];
+        assert_eq!((limit["default"].as_u64(), limit["min"].as_u64(), limit["max"].as_u64()), (Some(DEFAULT_LIMIT as u64), Some(10), Some(50)));
     }
 
     #[test]

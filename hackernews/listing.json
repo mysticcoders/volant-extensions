@@ -2,5 +2,5 @@
   "summary": "Front page, newest, Ask HN, Show HN and search results from Hacker News.",
   "publisher": "Mystic Coders",
   "license": "MIT",
-  "notes": "Reads the public Algolia Hacker News API. Return opens a story; Command-Return opens its discussion. Pin or hide stories, or hide a whole domain, from a story's Actions (Command-K); opened stories show as read. That list is saved only on this Mac."
+  "notes": "Reads the public Algolia Hacker News API. Return opens a story; Command-Return opens its discussion. Pin or hide stories, or hide a whole domain, from a story's Actions (Command-K); opened stories show as read. That list is saved only on this Mac. Settings \u203a Extensions \u203a Preferences sets how many stories to load, a minimum score, and whether rows show points and comments (Volant 0.3.22 and later)."
 }
