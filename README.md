@@ -127,6 +127,25 @@ iCloud, and removed when the extension is uninstalled. Declaring or changing pre
 an enabled extension off on update. The full rules are in Volant's
 [docs/extension-preferences.md](https://github.com/mysticcoders/volant/blob/main/docs/extension-preferences.md).
 
+## Start a new extension
+
+```sh
+tools/new-extension.py rust wordcount --name "Word Count" --id com.example.wordcount
+tools/new-extension.py typescript wordcount --name "Word Count"
+tools/new-extension.py python wordcount --name "Word Count"
+```
+
+Each creates a folder holding the same small list extension, which shows the typed text with its
+character and word counts, plus a test and a manifest that `./build.sh` completes with the module's
+hash. Rust uses the `kit` crate (ABI 1) and joins the Cargo workspace. TypeScript (ABI 2, through
+Javy) and Python (ABI 2, through MicroPython) take their pinned build scripts from `npm/` and
+`wikipedia/`, renamed for the new folder. The templates live in [`templates/`](templates); the
+comments in each say where to go next, such as declaring `hosts` and returning URLs from `plan`.
+
+Run `./build.sh`, then copy the folder into Volant's Extensions folder to try it. The new folder has
+no `listing.json`, so it stays out of the published catalog until you add one. `tools/new-extension.py
+--self-test`, which CI runs, starts one extension per language in a scratch copy and runs its tests.
+
 ## Build
 
 ```sh
