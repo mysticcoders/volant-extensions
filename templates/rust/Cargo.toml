@@ -1,0 +1,13 @@
+[package]
+name = "volant-__FOLDER__"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+volant-extension-kit = { path = "../kit" }
+
+[dev-dependencies]
+serde_json = "1"
