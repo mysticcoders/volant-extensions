@@ -1,0 +1,15 @@
+Licenses of the Rust crates compiled into this module, generated with cargo-about from the locked
+dependency graph (build and dev dependencies left out; proc-macro crates are listed even though
+only their generated code reaches the module). See docs/dependency-audit.md to regenerate it.
+{{#each licenses}}
+
+================================================================================
+{{{name}}} ({{{id}}})
+Used by:
+{{#each used_by}}
+  {{{crate.name}}} {{{crate.version}}}
+{{/each}}
+--------------------------------------------------------------------------------
+
+{{{text}}}
+{{/each}}
