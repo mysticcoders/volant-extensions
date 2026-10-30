@@ -16,7 +16,6 @@ import importlib.util
 import pathlib
 import re
 import sys
-import tomllib
 
 
 def load_new_extension(root):
@@ -28,13 +27,20 @@ def load_new_extension(root):
     return module
 
 
+def locked_packages(lock):
+    """The [[package]] entries of a Cargo.lock as dictionaries of their string fields. Cargo writes the
+    file in a fixed shape, so this reads it with the standard library; tomllib needs Python 3.11 and
+    macOS's own python3 is 3.9."""
+    return [dict(re.findall(r'^(\w+) = "([^"]*)"$', block, re.MULTILINE)) for block in lock.split("[[package]]")[1:]]
+
+
 def rust_problems(root):
     """Lists crates.io packages in Cargo.lock that RUST-LICENSES does not name at their locked version."""
     notice = root / "RUST-LICENSES"
     if not notice.is_file():
         return ["RUST-LICENSES is missing"]
     listed = set(re.findall(r"^  (\S+) (\S+)$", notice.read_text(), re.MULTILINE))
-    packages = tomllib.loads((root / "Cargo.lock").read_text()).get("package", [])
+    packages = locked_packages((root / "Cargo.lock").read_text())
     return [f"RUST-LICENSES does not list {package['name']} {package['version']}; regenerate it with cargo-about"
             for package in packages
             if package.get("source", "").startswith("registry+") and (package["name"], package["version"]) not in listed]

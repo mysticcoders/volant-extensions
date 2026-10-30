@@ -131,3 +131,5 @@ refresh `WASI-LIBC-LICENSE` from that commit's `LICENSE`, `LICENSE-MIT`, `libc-t
   change; add one if the owner wants every compiled-in component listed.
 - An advisory match or its absence says nothing about reachability in a sandboxed module that has no
   network or file access of its own.
+
+A from-scratch build on a bare Mac, with the toolchain versions it installed, is recorded in [fresh-macos-build.md](fresh-macos-build.md).
