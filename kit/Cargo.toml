@@ -2,6 +2,7 @@
 name = "volant-extension-kit"
 version = "0.1.0"
 edition = "2021"
+publish = false
 description = "ABI 1 glue and helpers for Volant list extensions"
 
 [dependencies]

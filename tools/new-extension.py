@@ -26,9 +26,11 @@ LANGUAGES = ("rust", "typescript", "python")
 FOLDER_PATTERN = re.compile(r"^[a-z][a-z0-9]{1,31}$")
 ID_PATTERN = re.compile(r"^[a-z0-9]+(\.[a-z0-9-]+)+$")
 PLACEHOLDER_HASH = "0" * 64
+TYPESCRIPT_LICENSES = ("JAVY-LICENSE", "QUICKJS-LICENSE", "RQUICKJS-LICENSE", "JAVY-CRATES-LICENSES", "WASI-LIBC-LICENSE")
+PYTHON_LICENSES = ("MICROPYTHON-LICENSE", "WASI-LIBC-LICENSE")
 TYPESCRIPT_FILES = ("build.sh", "build.mjs", "package.json", "package-lock.json", "tsconfig.json",
-                    "JAVY-LICENSE", "QUICKJS-LICENSE", "RQUICKJS-LICENSE", "src/kit.ts", "src/main.ts")
-PYTHON_FILES = ("build.sh", ".gitignore", "MICROPYTHON-LICENSE", "runtime/main.c", "runtime/mpconfigport.h", "runtime/embed.mk")
+                    "src/kit.ts", "src/main.ts") + TYPESCRIPT_LICENSES
+PYTHON_FILES = ("build.sh", ".gitignore", "runtime/main.c", "runtime/mpconfigport.h", "runtime/embed.mk") + PYTHON_LICENSES
 
 
 def manifest(folder, name, extension_id, abi):
@@ -124,6 +126,7 @@ def self_test():
         run(["npm", "ci", "--ignore-scripts", "--no-audit", "--no-fund", "--silent"], copy / "samplets")
         run(["npm", "test", "--silent"], copy / "samplets")
         run([sys.executable, "tests/test_samplepy.py"], copy / "samplepy")
+        run([sys.executable, "tools/check-licenses.py"], copy)
     print("new-extension: every template starts and passes its tests")
 
 

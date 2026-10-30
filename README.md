@@ -164,13 +164,16 @@ The TypeScript extension is bundled with esbuild and compiled with [Javy](https:
 9.1.0, which embeds the QuickJS-ng 0.15.0 engine through rquickjs 0.12.0. The module carries code from
 all three, so `npm/` includes their licenses: [`JAVY-LICENSE`](npm/JAVY-LICENSE) (Apache-2.0 WITH
 LLVM-exception), [`RQUICKJS-LICENSE`](npm/RQUICKJS-LICENSE) and [`QUICKJS-LICENSE`](npm/QUICKJS-LICENSE) (both MIT).
+Javy's plugin also links Rust crates and wasi-libc, listed in [`JAVY-CRATES-LICENSES`](npm/JAVY-CRATES-LICENSES)
+and [`WASI-LIBC-LICENSE`](npm/WASI-LIBC-LICENSE).
 `npm/build.sh` downloads Javy and checks its SHA-256 first.
 It needs Node 24. Javy does not produce identical bytes on every build, so CI checks only the
 committed module and its hash, not a rebuild.
 
 The Python extension runs on [MicroPython](https://micropython.org) 1.29.0, compiled with
 [wasi-sdk](https://github.com/WebAssembly/wasi-sdk) 34; `wikipedia/build.sh` downloads both and checks
-their SHA-256 first. Its tests run under plain CPython, so `--check` needs only `python3`. See
+their SHA-256 first. The module statically links wasi-libc, so `wikipedia/` carries
+[`MICROPYTHON-LICENSE`](wikipedia/MICROPYTHON-LICENSE) and [`WASI-LIBC-LICENSE`](wikipedia/WASI-LIBC-LICENSE). Its tests run under plain CPython, so `--check` needs only `python3`. See
 [`wikipedia/README.md`](wikipedia/README.md) for how the runtime is built and its limits.
 
 The toolchain is pinned in `rust-toolchain.toml` (with the `wasm32-unknown-unknown` target), so
@@ -218,6 +221,15 @@ npm, Inc., part of GitHub; Wikipedia and its logo are trademarks of the Wikimedi
 extensions are unofficial and not endorsed by any of them, and the MIT license below covers the code,
 not these marks.
 
+## Dependency audit
+
+CI runs cargo-deny (advisories, licenses, duplicate crates and sources, per [`deny.toml`](deny.toml)),
+`npm audit` on `npm/package-lock.json`, and `tools/check-licenses.py`, on every pull request, every push to
+`main` and weekly. [`docs/dependency-audit.md`](docs/dependency-audit.md) records the latest results, what
+each notice covers and how to regenerate them.
+
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE). The Rust modules compile in crates listed with their licenses in
+[`RUST-LICENSES`](RUST-LICENSES); the TypeScript and Python extensions carry their runtimes' notices in their
+folders.

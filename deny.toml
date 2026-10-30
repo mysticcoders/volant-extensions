@@ -1,0 +1,30 @@
+# cargo-deny policy for the Rust extensions. CI runs `cargo deny check advisories licenses bans sources`;
+# see docs/dependency-audit.md for what each check covers and how to rerun it.
+
+[graph]
+targets = ["wasm32-unknown-unknown"]
+all-features = true
+
+[advisories]
+version = 2
+yanked = "deny"
+ignore = []
+
+[licenses]
+version = 2
+confidence-threshold = 0.93
+allow = ["MIT", "Apache-2.0", "Unlicense", "Unicode-3.0"]
+
+[licenses.private]
+ignore = true
+
+[bans]
+multiple-versions = "deny"
+wildcards = "deny"
+allow-wildcard-paths = true
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []
