@@ -1,0 +1,18 @@
+{
+  "abiVersion": 1,
+  "id": "community.volant.case",
+  "name": "Case Converter",
+  "version": "0.1.0",
+  "module": "case.wasm",
+  "capabilities": [],
+  "output": "items",
+  "permissions": [
+    "clipboard"
+  ],
+  "mode": "list",
+  "placeholder": "Type text, or leave empty to use the clipboard",
+  "timeoutSeconds": 2,
+  "sha256": "2b3897e10254fd914ec5eae19d15a6ea86f63763fd4258b64db7b70ad1f47257",
+  "icon": "icon.webp",
+  "iconSha256": "03ffedf9a332dd94723175b35cb68efcb71e8fa7806de04eedd4b105b4ec6d82"
+}

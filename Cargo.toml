@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["kit", "github", "hackernews", "homebrew", "lobsters", "todoist", "weather"]
+members = ["kit", "case", "encode", "github", "hackernews", "hash", "homebrew", "lobsters", "todoist", "weather", "wordcount"]
 
 [profile.release]
 opt-level = "s"

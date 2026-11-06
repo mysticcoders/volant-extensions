@@ -1,0 +1,6 @@
+{
+  "summary": "Count the words, characters, sentences, paragraphs and lines of text you type or copy, with reading and speaking times.",
+  "publisher": "Mystic Coders",
+  "license": "MIT",
+  "notes": "Works offline and reads no websites. With the field empty it reads the clipboard's text, only when you run it, and never stores it. Each Chinese or Japanese character counts as a word."
+}

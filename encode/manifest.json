@@ -1,0 +1,18 @@
+{
+  "abiVersion": 1,
+  "id": "community.volant.encode",
+  "name": "Encode/Decode",
+  "version": "0.1.0",
+  "module": "encode.wasm",
+  "capabilities": [],
+  "output": "items",
+  "permissions": [
+    "clipboard"
+  ],
+  "mode": "list",
+  "placeholder": "Type text, or leave empty to use the clipboard",
+  "timeoutSeconds": 2,
+  "sha256": "99dfcbd933e94df69b248dabaabef3019b6eb0f3c2c0e734187935b78269b1c9",
+  "icon": "icon.webp",
+  "iconSha256": "a69b595c947ad19ca71dd29d8134855588c25a4b942a597d61f7e24ddaae2b5f"
+}

@@ -1,0 +1,6 @@
+{
+  "summary": "The SHA-256, SHA-1, MD5 and SHA-512 digests of text you type or copy, in lowercase hex, ready to copy.",
+  "publisher": "Mystic Coders",
+  "license": "MIT",
+  "notes": "Works offline and reads no websites. With the field empty it reads the clipboard's text, only when you run it, and never stores it. Hashes the text's UTF-8 bytes exactly, spaces and line breaks included."
+}

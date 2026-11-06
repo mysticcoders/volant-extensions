@@ -1,0 +1,18 @@
+{
+  "abiVersion": 1,
+  "id": "community.volant.wordcount",
+  "name": "Word Count",
+  "version": "0.1.0",
+  "module": "wordcount.wasm",
+  "capabilities": [],
+  "output": "items",
+  "permissions": [
+    "clipboard"
+  ],
+  "mode": "list",
+  "placeholder": "Type text, or leave empty to use the clipboard",
+  "timeoutSeconds": 2,
+  "sha256": "67d505f927e457763c3b9ed2e69ae5ffff3404b0f8ad352278f9724ce9764c55",
+  "icon": "icon.webp",
+  "iconSha256": "d374ea70015e7600e25b2ddbfadd9f0821c1efb9dc1f814a5f99e3ec45b73ddb"
+}
