@@ -1,0 +1,6 @@
+{
+  "summary": "Whether Claude, OpenAI, GitHub and Cloudflare are up, with their open incidents and maintenance.",
+  "publisher": "Mystic Coders",
+  "license": "MIT",
+  "notes": "Reads each service's public Statuspage summary from status.claude.com, status.openai.com, www.githubstatus.com and www.cloudflarestatus.com. Type a name to find a service, component or incident. A page that cannot be read shows only that service as unavailable. Return opens the status page or the incident. Not affiliated with Anthropic, OpenAI, GitHub, Cloudflare or Atlassian Statuspage."
+}

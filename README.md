@@ -13,6 +13,10 @@ Extensions for [Volant](https://usevolant.com), the macOS launcher. Each folder 
 | [GitHub](github) | Rust | `github`, `github <search>` | `api.github.com` | Pull requests to review, your pull requests, and issues assigned to or involving you |
 | [Homebrew](homebrew) | Rust | `homebrew <name>` | `formulae.brew.sh` | A formula or cask by exact name, with its install command |
 | [Todoist](todoist) | Rust | `todo`, `todo upcoming`, `todo inbox`, `todo p1`, `todo /<filter>`, `todo <new task>` | `api.todoist.com` | Your tasks; adds, completes and reschedules them |
+| [Service Status](status) | Rust | `status`, `status <name>` | `status.claude.com`, `status.openai.com`, `www.githubstatus.com`, `www.cloudflarestatus.com` | Whether Claude, OpenAI, GitHub and Cloudflare are up, with open incidents and maintenance |
+| [Maps](maps) | Rust | `maps <place>` | `nominatim.openstreetmap.org` | Places and addresses, opened in Apple Maps or on OpenStreetMap |
+| [Public Holidays](holidays) | Rust | `holidays`, `holidays <name>`, `holidays <country code>` | `date.nager.at` | Upcoming public holidays for your country or another |
+| [Stack Overflow](stackoverflow) | Rust | `stackoverflow <search>` | `api.stackexchange.com` | Questions matching a search, with score, answers and answered state |
 
 Return opens a story or package; Command-Return opens its discussion, homepage or repository in your browser.
 
@@ -25,8 +29,19 @@ Assigned to Me or Involving Me, and typed text narrows the list with GitHub's se
 `repo:owner/name`. Homebrew looks up the exact formula or cask name you type, since Homebrew has no
 search API; Return on its install row copies `brew install …`. Hacker News adds a dropdown at the end of the field (Top, New,
 Ask HN, Show HN; Command-P picks the next one) and searches within the chosen page, and shows each
-story's points, comments and site as badges. Wikipedia and npm declare `"mode": "search"`, so they wait for
+story's points, comments and site as badges. Wikipedia, npm, Maps and Stack Overflow declare `"mode": "search"`, so they wait for
 you to type; the others show their list at once. Older Volant versions ignore `mode` and `placeholder`.
+
+Service Status reads all four status pages at once and shows each service's overall status, with
+badges for open incidents, maintenance under way and affected components, then a row per open incident
+or maintenance; typed text finds a service, component or incident by name, and a page that fails shows
+only that service as unavailable. Maps searches OpenStreetMap's Nominatim once per pause in typing, as
+its usage policy asks; Return opens the place in Apple Maps and Command-Return on openstreetmap.org
+(search data © OpenStreetMap contributors, ODbL). Public Holidays lists holidays from today on, into
+next year once it is within 90 days; its preference picks the country (United States by default), and
+a two-letter code typed first, such as `holidays de`, shows another. Dates count from today in UTC,
+since modules have no time zone. Stack Overflow uses the Stack Exchange API without a key, which allows
+300 searches a day from one network, and says when that runs out.
 
 Weather and Todoist need Volant 0.3.4 or later. Weather asks once to share your approximate location
 (about 11 km) with it and Open-Meteo; `weather <place>` works without it. Weather data is by
@@ -212,14 +227,18 @@ To add one, give its folder a `listing.json`:
 
 An extension can show an icon in the launcher and Settings: a square WebP of at most 32 KB beside its
 manifest, named by `icon` and pinned by `iconSha256` (`./build.sh` writes the hash). GitHub, Hacker News,
-Homebrew, Lobsters, Todoist and Wikipedia use their sites' own touch icons, and npm uses its logo from the npm
-organization's GitHub avatar, each converted to a 128-pixel WebP. Weather's icon is original art
-(`weather/icon.svg`). Hacker News and the Y Combinator logo are trademarks of Y Combinator; the
+Homebrew, Lobsters, Maps (OpenStreetMap's), Stack Overflow, Todoist and Wikipedia use their sites' own touch
+icons, and npm uses its logo from the npm organization's GitHub avatar, each converted to a 128-pixel WebP.
+Weather, Service Status and Public Holidays use original art (`weather/icon.svg`, `status/icon.svg`,
+`holidays/icon.svg`). Hacker News and the Y Combinator logo are trademarks of Y Combinator; the
 Lobsters name and logo belong to Lobsters; Todoist is a trademark of Doist; GitHub and the Invertocat logo are trademarks of GitHub, Inc.; the
 Homebrew name and logo belong to the Homebrew project; npm is a trademark of
-npm, Inc., part of GitHub; Wikipedia and its logo are trademarks of the Wikimedia Foundation. These
-extensions are unofficial and not endorsed by any of them, and the MIT license below covers the code,
-not these marks.
+npm, Inc., part of GitHub; Wikipedia and its logo are trademarks of the Wikimedia Foundation;
+OpenStreetMap and its logo are trademarks of the OpenStreetMap Foundation; Stack Overflow and its logo
+are trademarks of Stack Exchange, Inc.; Claude and Anthropic are trademarks of Anthropic, PBC; OpenAI is
+a trademark of OpenAI; Cloudflare is a trademark of Cloudflare, Inc.; Apple Maps is a trademark of Apple
+Inc. These extensions are unofficial and not endorsed by any of them, and the MIT license below covers
+the code, not these marks.
 
 ## Dependency audit
 

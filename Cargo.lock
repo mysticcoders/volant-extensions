@@ -119,6 +119,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "volant-holidays"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "volant-extension-kit",
+]
+
+[[package]]
 name = "volant-homebrew"
 version = "0.1.0"
 dependencies = [
@@ -129,6 +138,33 @@ dependencies = [
 
 [[package]]
 name = "volant-lobsters"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "volant-extension-kit",
+]
+
+[[package]]
+name = "volant-maps"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "volant-extension-kit",
+]
+
+[[package]]
+name = "volant-stackoverflow"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "volant-extension-kit",
+]
+
+[[package]]
+name = "volant-status"
 version = "0.1.0"
 dependencies = [
  "serde",

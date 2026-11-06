@@ -1,0 +1,18 @@
+{
+  "abiVersion": 1,
+  "id": "community.volant.stackoverflow",
+  "name": "Stack Overflow",
+  "version": "0.1.0",
+  "module": "stackoverflow.wasm",
+  "capabilities": [],
+  "hosts": [
+    "api.stackexchange.com"
+  ],
+  "output": "items",
+  "mode": "search",
+  "placeholder": "Search Stack Overflow",
+  "timeoutSeconds": 2,
+  "sha256": "31b77498bf3ac4aeb2b3d819278904e7a67d355aca1d24b62ca067173f369bb9",
+  "icon": "icon.webp",
+  "iconSha256": "8e84434158690da22eec6708eb9fe47b30316311f002c9913c4e4a03d567b74c"
+}

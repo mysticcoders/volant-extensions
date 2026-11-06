@@ -1,0 +1,6 @@
+{
+  "summary": "Search for places and addresses with OpenStreetMap, and open them in Apple Maps.",
+  "publisher": "Mystic Coders",
+  "license": "MIT",
+  "notes": "Searches OpenStreetMap's Nominatim service on nominatim.openstreetmap.org, once per pause in typing, as its usage policy asks. Return opens the place in Apple Maps; Command-Return opens it on openstreetmap.org. Search data © OpenStreetMap contributors, available under the Open Database License. Not affiliated with the OpenStreetMap Foundation or Apple."
+}

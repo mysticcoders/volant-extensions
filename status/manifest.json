@@ -1,0 +1,21 @@
+{
+  "abiVersion": 1,
+  "id": "community.volant.status",
+  "name": "Service Status",
+  "version": "0.1.0",
+  "module": "status.wasm",
+  "capabilities": [],
+  "hosts": [
+    "status.claude.com",
+    "status.openai.com",
+    "www.githubstatus.com",
+    "www.cloudflarestatus.com"
+  ],
+  "output": "items",
+  "mode": "list",
+  "placeholder": "Filter services and components",
+  "timeoutSeconds": 2,
+  "sha256": "b7a44e04d3c2ded402ef8d8f55ac9ee2c777c5a29d92033c506e951e8c9faa22",
+  "icon": "icon.webp",
+  "iconSha256": "9c1ea8c788c36dc5cbbddac61d421e0e5e662693a69c53344e0170a0f40da411"
+}

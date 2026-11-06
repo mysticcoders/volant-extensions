@@ -1,0 +1,6 @@
+{
+  "summary": "Search Stack Overflow questions, with their score, answers and whether they are answered.",
+  "publisher": "Mystic Coders",
+  "license": "MIT",
+  "notes": "Reads the public Stack Exchange API on api.stackexchange.com without a key, which allows 300 searches a day from one network; when that runs out, the list says when to try again. Return opens the question on stackoverflow.com. Not affiliated with Stack Overflow or Stack Exchange."
+}
