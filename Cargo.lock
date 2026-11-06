@@ -93,6 +93,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2c754d6c33795a1c324727428e5a7dedb5b06195f9890bdbcba760d3e246563"
 
 [[package]]
+name = "volant-crates"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "volant-extension-kit",
+]
+
+[[package]]
+name = "volant-docker"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "volant-extension-kit",
+]
+
+[[package]]
 name = "volant-extension-kit"
 version = "0.1.0"
 dependencies = [
@@ -147,6 +165,24 @@ dependencies = [
 
 [[package]]
 name = "volant-maps"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "volant-extension-kit",
+]
+
+[[package]]
+name = "volant-mdn"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "volant-extension-kit",
+]
+
+[[package]]
+name = "volant-pypi"
 version = "0.1.0"
 dependencies = [
  "serde",

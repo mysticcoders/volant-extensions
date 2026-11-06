@@ -1,0 +1,18 @@
+{
+  "abiVersion": 1,
+  "id": "community.volant.mdn",
+  "name": "MDN",
+  "version": "0.1.0",
+  "module": "mdn.wasm",
+  "capabilities": [],
+  "hosts": [
+    "developer.mozilla.org"
+  ],
+  "output": "items",
+  "timeoutSeconds": 2,
+  "sha256": "dbdeeb031b4fbed7b61a76ac09c3f15ff1ca85fe8cbe144ca5ef534d275cec3e",
+  "icon": "icon.webp",
+  "iconSha256": "f6aec3af05af36cb18ed658215c6c11a65fa5811f1e0e0a8e53e0332acd983f2",
+  "mode": "search",
+  "placeholder": "Search MDN, such as flexbox"
+}

@@ -1,0 +1,18 @@
+{
+  "abiVersion": 1,
+  "id": "community.volant.pypi",
+  "name": "PyPI",
+  "version": "0.1.0",
+  "module": "pypi.wasm",
+  "capabilities": [],
+  "hosts": [
+    "pypi.org"
+  ],
+  "output": "items",
+  "timeoutSeconds": 2,
+  "sha256": "43e70b8f9ea0cd073620ae2f7805d332ff1a04742da92355536535769c302922",
+  "icon": "icon.webp",
+  "iconSha256": "8c052ea9e39ccab3b31680d5b436dce3fdd6320f6620e1f87607839d7e1ed42f",
+  "mode": "search",
+  "placeholder": "Exact package name, such as requests"
+}

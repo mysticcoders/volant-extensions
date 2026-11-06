@@ -17,6 +17,10 @@ Extensions for [Volant](https://usevolant.com), the macOS launcher. Each folder 
 | [Maps](maps) | Rust | `maps <place>` | `nominatim.openstreetmap.org` | Places and addresses, opened in Apple Maps or on OpenStreetMap |
 | [Public Holidays](holidays) | Rust | `holidays`, `holidays <name>`, `holidays <country code>` | `date.nager.at` | Upcoming public holidays for your country or another |
 | [Stack Overflow](stackoverflow) | Rust | `stackoverflow <search>` | `api.stackexchange.com` | Questions matching a search, with score, answers and answered state |
+| [crates.io](crates) | Rust | `crates <search>` | `crates.io` | Rust crates matching a name or keyword, with downloads |
+| [PyPI](pypi) | Rust | `pypi <name>` | `pypi.org` | A Python package by exact name, with its `uv add` and `pip install` commands |
+| [Docker Hub](docker) | Rust | `docker <search>` | `hub.docker.com` | Container images matching a name or keyword, with stars, pulls and the `docker pull` command |
+| [MDN](mdn) | Rust | `mdn <search>` | `developer.mozilla.org` | MDN Web Docs pages matching a topic |
 
 Return opens a story or package; Command-Return opens its discussion, homepage or repository in your browser.
 
@@ -27,9 +31,12 @@ fine-grained personal access token with read access to pull requests and issues,
 and added only to requests to api.github.com; its dropdown picks Review Requests, My Pull Requests,
 Assigned to Me or Involving Me, and typed text narrows the list with GitHub's search syntax, such as
 `repo:owner/name`. Homebrew looks up the exact formula or cask name you type, since Homebrew has no
-search API; Return on its install row copies `brew install …`. Hacker News adds a dropdown at the end of the field (Top, New,
+search API; Return on its install row copies `brew install …`. PyPI likewise looks up the exact package
+name, reading the package's releases feed first and then only its latest release, since a package's full
+JSON can pass Volant's 512 KB limit; Return on its `uv add` or `pip install` row copies it, and Docker
+Hub's `docker pull` row works the same way. Hacker News adds a dropdown at the end of the field (Top, New,
 Ask HN, Show HN; Command-P picks the next one) and searches within the chosen page, and shows each
-story's points, comments and site as badges. Wikipedia, npm, Maps and Stack Overflow declare `"mode": "search"`, so they wait for
+story's points, comments and site as badges. Wikipedia, npm, Homebrew, crates.io, PyPI, Docker Hub, MDN, Maps and Stack Overflow declare `"mode": "search"`, so they wait for
 you to type; the others show their list at once. Older Volant versions ignore `mode` and `placeholder`.
 
 Service Status reads all four status pages at once and shows each service's overall status, with
@@ -227,18 +234,21 @@ To add one, give its folder a `listing.json`:
 
 An extension can show an icon in the launcher and Settings: a square WebP of at most 32 KB beside its
 manifest, named by `icon` and pinned by `iconSha256` (`./build.sh` writes the hash). GitHub, Hacker News,
-Homebrew, Lobsters, Maps (OpenStreetMap's), Stack Overflow, Todoist and Wikipedia use their sites' own touch
-icons, and npm uses its logo from the npm organization's GitHub avatar, each converted to a 128-pixel WebP.
-Weather, Service Status and Public Holidays use original art (`weather/icon.svg`, `status/icon.svg`,
+Homebrew, Lobsters, Maps (OpenStreetMap's), MDN, Stack Overflow, Todoist and Wikipedia use their sites' own
+touch icons; npm, PyPI and Docker Hub use their logos from the npm, PyPI and Docker organizations' GitHub
+avatars; crates.io uses the Cargo logo from the crates.io repository; each is converted to a 128-pixel
+WebP. Weather, Service Status and Public Holidays use original art (`weather/icon.svg`, `status/icon.svg`,
 `holidays/icon.svg`). Hacker News and the Y Combinator logo are trademarks of Y Combinator; the
 Lobsters name and logo belong to Lobsters; Todoist is a trademark of Doist; GitHub and the Invertocat logo are trademarks of GitHub, Inc.; the
 Homebrew name and logo belong to the Homebrew project; npm is a trademark of
-npm, Inc., part of GitHub; Wikipedia and its logo are trademarks of the Wikimedia Foundation;
-OpenStreetMap and its logo are trademarks of the OpenStreetMap Foundation; Stack Overflow and its logo
-are trademarks of Stack Exchange, Inc.; Claude and Anthropic are trademarks of Anthropic, PBC; OpenAI is
-a trademark of OpenAI; Cloudflare is a trademark of Cloudflare, Inc.; Apple Maps is a trademark of Apple
-Inc. These extensions are unofficial and not endorsed by any of them, and the MIT license below covers
-the code, not these marks.
+npm, Inc., part of GitHub; Wikipedia and its logo are trademarks of the Wikimedia Foundation; Rust,
+Cargo and crates.io and their logos are trademarks of the Rust Foundation; Python, PyPI and their logos
+are trademarks of the Python Software Foundation; Docker and the Docker logo are trademarks of Docker,
+Inc.; MDN, Mozilla and the MDN logo are trademarks of the Mozilla Foundation; OpenStreetMap and its logo
+are trademarks of the OpenStreetMap Foundation; Stack Overflow and its logo are trademarks of Stack
+Exchange, Inc.; Claude and Anthropic are trademarks of Anthropic, PBC; OpenAI is a trademark of OpenAI;
+Cloudflare is a trademark of Cloudflare, Inc.; Apple Maps is a trademark of Apple Inc. These extensions
+are unofficial and not endorsed by any of them, and the MIT license below covers the code, not these marks.
 
 ## Dependency audit
 
