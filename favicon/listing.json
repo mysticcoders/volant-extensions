@@ -1,0 +1,6 @@
+{
+  "summary": "Type a domain or URL and copy its site's icon, from DuckDuckGo's icon service.",
+  "publisher": "Mystic Coders",
+  "license": "MIT",
+  "notes": "Reads icons.duckduckgo.com only when you choose Copy. Copying needs a Volant release with row copying; older versions open the icon in your browser instead. DuckDuckGo answers sites without an icon with a placeholder. Not affiliated with DuckDuckGo."
+}

@@ -155,6 +155,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "volant-favicon"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "volant-extension-kit",
+]
+
+[[package]]
 name = "volant-fonts"
 version = "0.1.0"
 dependencies = [
@@ -273,6 +282,15 @@ dependencies = [
 
 [[package]]
 name = "volant-status"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "volant-extension-kit",
+]
+
+[[package]]
+name = "volant-svgl"
 version = "0.1.0"
 dependencies = [
  "serde",

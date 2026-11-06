@@ -1,0 +1,6 @@
+{
+  "summary": "Search svgl's library of brand logos and copy a logo's SVG, with its dark version and wordmark when svgl has them.",
+  "publisher": "Mystic Coders",
+  "license": "MIT",
+  "notes": "Reads api.svgl.app and, only when you choose Copy, the SVG from svgl.app. Copying needs a Volant release with row copying; older versions open the brand's website or the SVG instead. Logos belong to their owners. Not affiliated with svgl."
+}
