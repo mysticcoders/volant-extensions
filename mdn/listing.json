@@ -1,0 +1,6 @@
+{
+  "summary": "Search MDN Web Docs: pages on HTML, CSS, JavaScript and web APIs, each with its summary and section.",
+  "publisher": "Mystic Coders",
+  "license": "MIT",
+  "notes": "Reads developer.mozilla.org, in English. Not affiliated with Mozilla."
+}

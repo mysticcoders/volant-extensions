@@ -93,6 +93,42 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2c754d6c33795a1c324727428e5a7dedb5b06195f9890bdbcba760d3e246563"
 
 [[package]]
+name = "volant-case"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "volant-extension-kit",
+]
+
+[[package]]
+name = "volant-crates"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "volant-extension-kit",
+]
+
+[[package]]
+name = "volant-docker"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "volant-extension-kit",
+]
+
+[[package]]
+name = "volant-encode"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "volant-extension-kit",
+]
+
+[[package]]
 name = "volant-extension-kit"
 version = "0.1.0"
 dependencies = [
@@ -119,6 +155,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "volant-hash"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "volant-extension-kit",
+]
+
+[[package]]
+name = "volant-holidays"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "volant-extension-kit",
+]
+
+[[package]]
 name = "volant-homebrew"
 version = "0.1.0"
 dependencies = [
@@ -137,6 +191,51 @@ dependencies = [
 ]
 
 [[package]]
+name = "volant-maps"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "volant-extension-kit",
+]
+
+[[package]]
+name = "volant-mdn"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "volant-extension-kit",
+]
+
+[[package]]
+name = "volant-pypi"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "volant-extension-kit",
+]
+
+[[package]]
+name = "volant-stackoverflow"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "volant-extension-kit",
+]
+
+[[package]]
+name = "volant-status"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "volant-extension-kit",
+]
+
+[[package]]
 name = "volant-todoist"
 version = "0.1.0"
 dependencies = [
@@ -147,6 +246,15 @@ dependencies = [
 
 [[package]]
 name = "volant-weather"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "volant-extension-kit",
+]
+
+[[package]]
+name = "volant-wordcount"
 version = "0.1.0"
 dependencies = [
  "serde",

@@ -1,0 +1,18 @@
+{
+  "abiVersion": 1,
+  "id": "community.volant.maps",
+  "name": "Maps",
+  "version": "0.1.0",
+  "module": "maps.wasm",
+  "capabilities": [],
+  "hosts": [
+    "nominatim.openstreetmap.org"
+  ],
+  "output": "items",
+  "mode": "search",
+  "placeholder": "Search for a place or address",
+  "timeoutSeconds": 2,
+  "sha256": "b20f3b4d144f29c1dabb0a366e79d3abe2bb8e2e83448f8cbc0a46cfb4fca59e",
+  "icon": "icon.webp",
+  "iconSha256": "0ec3ef2fb31b3624b96c5022b68c1c97d91d369d9b09513aedd3606072691556"
+}

@@ -1,0 +1,109 @@
+{
+  "abiVersion": 1,
+  "id": "community.volant.holidays",
+  "name": "Public Holidays",
+  "version": "0.1.0",
+  "module": "holidays.wasm",
+  "capabilities": [],
+  "hosts": [
+    "date.nager.at"
+  ],
+  "output": "items",
+  "mode": "list",
+  "placeholder": "Filter holidays, or type a country code",
+  "timeoutSeconds": 2,
+  "sha256": "aab9e519e3a4c7bd513947621f404194a0ad3f718e4adaae9369f29b64e3594f",
+  "icon": "icon.webp",
+  "preferences": [
+    {
+      "id": "country",
+      "type": "dropdown",
+      "title": "Country",
+      "description": "Whose public holidays to list; typing a two-letter code first shows another country",
+      "default": "us",
+      "choices": [
+        {
+          "id": "us",
+          "title": "United States"
+        },
+        {
+          "id": "ca",
+          "title": "Canada"
+        },
+        {
+          "id": "mx",
+          "title": "Mexico"
+        },
+        {
+          "id": "br",
+          "title": "Brazil"
+        },
+        {
+          "id": "gb",
+          "title": "United Kingdom"
+        },
+        {
+          "id": "ie",
+          "title": "Ireland"
+        },
+        {
+          "id": "fr",
+          "title": "France"
+        },
+        {
+          "id": "de",
+          "title": "Germany"
+        },
+        {
+          "id": "es",
+          "title": "Spain"
+        },
+        {
+          "id": "it",
+          "title": "Italy"
+        },
+        {
+          "id": "nl",
+          "title": "Netherlands"
+        },
+        {
+          "id": "be",
+          "title": "Belgium"
+        },
+        {
+          "id": "ch",
+          "title": "Switzerland"
+        },
+        {
+          "id": "at",
+          "title": "Austria"
+        },
+        {
+          "id": "se",
+          "title": "Sweden"
+        },
+        {
+          "id": "no",
+          "title": "Norway"
+        },
+        {
+          "id": "pl",
+          "title": "Poland"
+        },
+        {
+          "id": "au",
+          "title": "Australia"
+        },
+        {
+          "id": "nz",
+          "title": "New Zealand"
+        },
+        {
+          "id": "jp",
+          "title": "Japan"
+        }
+      ]
+    }
+  ],
+  "iconSha256": "7563fc556389b591fd6b01d9920016b1c8d868ce59dfdf2033c608ec4a49342e"
+}

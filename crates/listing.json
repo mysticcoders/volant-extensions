@@ -1,0 +1,6 @@
+{
+  "summary": "Search Rust crates on crates.io: each crate's description, latest version and downloads, with a link to its repository or docs.rs.",
+  "publisher": "Mystic Coders",
+  "license": "MIT",
+  "notes": "Reads crates.io. The crate named exactly as you type comes first. Not affiliated with the Rust Foundation or crates.io."
+}

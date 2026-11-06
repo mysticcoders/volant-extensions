@@ -13,6 +13,18 @@ Extensions for [Volant](https://usevolant.com), the macOS launcher. Each folder 
 | [GitHub](github) | Rust | `github`, `github <search>` | `api.github.com` | Pull requests to review, your pull requests, and issues assigned to or involving you |
 | [Homebrew](homebrew) | Rust | `homebrew <name>` | `formulae.brew.sh` | A formula or cask by exact name, with its install command |
 | [Todoist](todoist) | Rust | `todo`, `todo upcoming`, `todo inbox`, `todo p1`, `todo /<filter>`, `todo <new task>` | `api.todoist.com` | Your tasks; adds, completes and reschedules them |
+| [Service Status](status) | Rust | `status`, `status <name>` | `status.claude.com`, `status.openai.com`, `www.githubstatus.com`, `www.cloudflarestatus.com` | Whether Claude, OpenAI, GitHub and Cloudflare are up, with open incidents and maintenance |
+| [Maps](maps) | Rust | `maps <place>` | `nominatim.openstreetmap.org` | Places and addresses, opened in Apple Maps or on OpenStreetMap |
+| [Public Holidays](holidays) | Rust | `holidays`, `holidays <name>`, `holidays <country code>` | `date.nager.at` | Upcoming public holidays for your country or another |
+| [Stack Overflow](stackoverflow) | Rust | `stackoverflow <search>` | `api.stackexchange.com` | Questions matching a search, with score, answers and answered state |
+| [crates.io](crates) | Rust | `crates <search>` | `crates.io` | Rust crates matching a name or keyword, with downloads |
+| [PyPI](pypi) | Rust | `pypi <name>` | `pypi.org` | A Python package by exact name, with its `uv add` and `pip install` commands |
+| [Docker Hub](docker) | Rust | `docker <search>` | `hub.docker.com` | Container images matching a name or keyword, with stars, pulls and the `docker pull` command |
+| [MDN](mdn) | Rust | `mdn <search>` | `developer.mozilla.org` | MDN Web Docs pages matching a topic |
+| [Word Count](wordcount) | Rust | `word count`, `word count <text>` | nothing (offline) | Words, characters, sentences, paragraphs, lines, and reading and speaking times |
+| [Case Converter](case) | Rust | `case`, `case <text>` | nothing (offline) | The text in camelCase, PascalCase, snake_case, SCREAMING_SNAKE_CASE, kebab-case, Title Case, Sentence case, lower case, UPPER CASE and dot.case |
+| [Encode/Decode](encode) | Rust | `encode`, `encode <text>` | nothing (offline) | Base64, Base64URL, URL and HTML encodings, and decodings when the text already is one |
+| [Hash](hash) | Rust | `hash`, `hash <text>` | nothing (offline) | SHA-256, SHA-1, MD5 and SHA-512 digests in lowercase hex |
 
 Return opens a story or package; Command-Return opens its discussion, homepage or repository in your browser.
 
@@ -23,10 +35,24 @@ fine-grained personal access token with read access to pull requests and issues,
 and added only to requests to api.github.com; its dropdown picks Review Requests, My Pull Requests,
 Assigned to Me or Involving Me, and typed text narrows the list with GitHub's search syntax, such as
 `repo:owner/name`. Homebrew looks up the exact formula or cask name you type, since Homebrew has no
-search API; Return on its install row copies `brew install …`. Hacker News adds a dropdown at the end of the field (Top, New,
+search API; Return on its install row copies `brew install …`. PyPI likewise looks up the exact package
+name, reading the package's releases feed first and then only its latest release, since a package's full
+JSON can pass Volant's 512 KB limit; Return on its `uv add` or `pip install` row copies it, and Docker
+Hub's `docker pull` row works the same way. Hacker News adds a dropdown at the end of the field (Top, New,
 Ask HN, Show HN; Command-P picks the next one) and searches within the chosen page, and shows each
-story's points, comments and site as badges. Wikipedia and npm declare `"mode": "search"`, so they wait for
+story's points, comments and site as badges. Wikipedia, npm, Homebrew, crates.io, PyPI, Docker Hub, MDN, Maps and Stack Overflow declare `"mode": "search"`, so they wait for
 you to type; the others show their list at once. Older Volant versions ignore `mode` and `placeholder`.
+
+Service Status reads all four status pages at once and shows each service's overall status, with
+badges for open incidents, maintenance under way and affected components, then a row per open incident
+or maintenance; typed text finds a service, component or incident by name, and a page that fails shows
+only that service as unavailable. Maps searches OpenStreetMap's Nominatim once per pause in typing, as
+its usage policy asks; Return opens the place in Apple Maps and Command-Return on openstreetmap.org
+(search data © OpenStreetMap contributors, ODbL). Public Holidays lists holidays from today on, into
+next year once it is within 90 days; its preference picks the country (United States by default), and
+a two-letter code typed first, such as `holidays de`, shows another. Dates count from today in UTC,
+since modules have no time zone. Stack Overflow uses the Stack Exchange API without a key, which allows
+300 searches a day from one network, and says when that runs out.
 
 Weather and Todoist need Volant 0.3.4 or later. Weather asks once to share your approximate location
 (about 11 km) with it and Open-Meteo; `weather <place>` works without it. Weather data is by
@@ -35,6 +61,12 @@ which Volant keeps in your Keychain and adds only to requests to api.todoist.com
 sees it. Type `todo` and a task, such as `todo buy milk tomorrow p1`, and Return adds it with Todoist's
 Quick Add; a task's Actions complete it or move it to tomorrow or next week, and Return opens it in
 Todoist.app, or on the web without the app.
+
+Word Count, Case Converter, Encode/Decode and Hash work offline and list no hosts. Each uses the text
+you type, or, with the field empty, the clipboard's text, and each row says which. They ask once to read
+your clipboard's text when you run them (Volant 0.3.24 or later); Volant reads it only as a run starts,
+and the extensions never store it. Return on a row copies its result. Volant copies at most 300
+characters from a row, so a longer result shows its length instead of a cut-off copy.
 
 In Hacker News and Lobsters, a story's Actions (Command-K) can pin it, hide it, or hide every story
 from its domain; Show Hidden Stories brings them back, and stories you open show as read. Pinned
@@ -212,14 +244,21 @@ To add one, give its folder a `listing.json`:
 
 An extension can show an icon in the launcher and Settings: a square WebP of at most 32 KB beside its
 manifest, named by `icon` and pinned by `iconSha256` (`./build.sh` writes the hash). GitHub, Hacker News,
-Homebrew, Lobsters, Todoist and Wikipedia use their sites' own touch icons, and npm uses its logo from the npm
-organization's GitHub avatar, each converted to a 128-pixel WebP. Weather's icon is original art
-(`weather/icon.svg`). Hacker News and the Y Combinator logo are trademarks of Y Combinator; the
+Homebrew, Lobsters, Maps (OpenStreetMap's), MDN, Stack Overflow, Todoist and Wikipedia use their sites' own
+touch icons; npm, PyPI and Docker Hub use their logos from the npm, PyPI and Docker organizations' GitHub
+avatars; crates.io uses the Cargo logo from the crates.io repository; each is converted to a 128-pixel
+WebP. Weather, Service Status and Public Holidays use original art (`weather/icon.svg`, `status/icon.svg`,
+`holidays/icon.svg`). Hacker News and the Y Combinator logo are trademarks of Y Combinator; the
 Lobsters name and logo belong to Lobsters; Todoist is a trademark of Doist; GitHub and the Invertocat logo are trademarks of GitHub, Inc.; the
 Homebrew name and logo belong to the Homebrew project; npm is a trademark of
-npm, Inc., part of GitHub; Wikipedia and its logo are trademarks of the Wikimedia Foundation. These
-extensions are unofficial and not endorsed by any of them, and the MIT license below covers the code,
-not these marks.
+npm, Inc., part of GitHub; Wikipedia and its logo are trademarks of the Wikimedia Foundation; Rust,
+Cargo and crates.io and their logos are trademarks of the Rust Foundation; Python, PyPI and their logos
+are trademarks of the Python Software Foundation; Docker and the Docker logo are trademarks of Docker,
+Inc.; MDN, Mozilla and the MDN logo are trademarks of the Mozilla Foundation; OpenStreetMap and its logo
+are trademarks of the OpenStreetMap Foundation; Stack Overflow and its logo are trademarks of Stack
+Exchange, Inc.; Claude and Anthropic are trademarks of Anthropic, PBC; OpenAI is a trademark of OpenAI;
+Cloudflare is a trademark of Cloudflare, Inc.; Apple Maps is a trademark of Apple Inc. These extensions
+are unofficial and not endorsed by any of them, and the MIT license below covers the code, not these marks.
 
 ## Dependency audit
 

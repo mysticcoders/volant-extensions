@@ -1,0 +1,18 @@
+{
+  "abiVersion": 1,
+  "id": "community.volant.crates",
+  "name": "crates.io",
+  "version": "0.1.0",
+  "module": "crates.wasm",
+  "capabilities": [],
+  "hosts": [
+    "crates.io"
+  ],
+  "output": "items",
+  "timeoutSeconds": 2,
+  "sha256": "32fc44bb26e0b2a38e50c8724723182185c4af07cc6ab3c94aa1985b974ced27",
+  "icon": "icon.webp",
+  "iconSha256": "cf507258e95f25707be7b181c1cebd6387a01c4ebe2bbc6ac87d7e614e6eafd4",
+  "mode": "search",
+  "placeholder": "Crate name or keyword, such as serde"
+}

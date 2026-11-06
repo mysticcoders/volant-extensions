@@ -1,0 +1,18 @@
+{
+  "abiVersion": 1,
+  "id": "community.volant.hash",
+  "name": "Hash",
+  "version": "0.1.0",
+  "module": "hash.wasm",
+  "capabilities": [],
+  "output": "items",
+  "permissions": [
+    "clipboard"
+  ],
+  "mode": "list",
+  "placeholder": "Type text, or leave empty to use the clipboard",
+  "timeoutSeconds": 2,
+  "sha256": "4829d95acde7141fb6d283fc39fa1bcde3dd25a24b9be931dcde610ac1fbf404",
+  "icon": "icon.webp",
+  "iconSha256": "87d1cf9cb87dc59781fe83562da6f214ba57da4c32c50d726b3c70e70ac3604e"
+}

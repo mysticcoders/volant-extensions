@@ -1,0 +1,6 @@
+{
+  "summary": "Upcoming public holidays for your country, or any country by its two-letter code.",
+  "publisher": "Mystic Coders",
+  "license": "MIT",
+  "notes": "Reads the free Nager.Date API on date.nager.at. Settings › Extensions › Preferences picks the country (United States by default; Volant 0.3.22 and later). Type a name to filter, or a code first, such as de or fr noël, for another country. Dates count from today in UTC. Return opens the country's year on nagerholidays.com. Not affiliated with Nager.Date."
+}
