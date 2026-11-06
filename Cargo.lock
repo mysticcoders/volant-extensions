@@ -102,6 +102,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "volant-characters"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "volant-extension-kit",
+]
+
+[[package]]
 name = "volant-crates"
 version = "0.1.0"
 dependencies = [
@@ -137,6 +146,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "volant-fancytext"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "volant-extension-kit",
+]
+
+[[package]]
+name = "volant-fonts"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "volant-extension-kit",
+]
+
+[[package]]
 name = "volant-github"
 version = "0.1.0"
 dependencies = [
@@ -156,6 +183,15 @@ dependencies = [
 
 [[package]]
 name = "volant-hash"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "volant-extension-kit",
+]
+
+[[package]]
+name = "volant-hig"
 version = "0.1.0"
 dependencies = [
  "serde",
@@ -210,6 +246,15 @@ dependencies = [
 
 [[package]]
 name = "volant-pypi"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "volant-extension-kit",
+]
+
+[[package]]
+name = "volant-sfsymbols"
 version = "0.1.0"
 dependencies = [
  "serde",

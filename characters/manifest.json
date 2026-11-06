@@ -1,0 +1,15 @@
+{
+  "abiVersion": 1,
+  "id": "community.volant.characters",
+  "name": "Characters",
+  "version": "0.1.0",
+  "module": "characters.wasm",
+  "capabilities": [],
+  "output": "items",
+  "mode": "list",
+  "placeholder": "Search characters, such as em dash",
+  "timeoutSeconds": 2,
+  "sha256": "e5d93c3f9f5134c6b98d7f2c06cc8b6f57a9a58367d991cf2df8a364a0216efc",
+  "icon": "icon.webp",
+  "iconSha256": "616bee847ad38163b25c54a000f6527b1b3e6d7c808ae2b0c885bf5eb7efdd14"
+}

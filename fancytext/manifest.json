@@ -1,0 +1,18 @@
+{
+  "abiVersion": 1,
+  "id": "community.volant.fancytext",
+  "name": "Fancy Text",
+  "version": "0.1.0",
+  "module": "fancytext.wasm",
+  "capabilities": [],
+  "output": "items",
+  "permissions": [
+    "clipboard"
+  ],
+  "mode": "list",
+  "placeholder": "Type text, or leave empty to use the clipboard",
+  "timeoutSeconds": 2,
+  "sha256": "af6b7035f542d7a69e71b200475b9865d632f97fa0a9e7354b0cb76a30be9127",
+  "icon": "icon.webp",
+  "iconSha256": "13072036aad2993e43e41d0655a203f87087b91ce43e7192a60d9511aa93a0f1"
+}
