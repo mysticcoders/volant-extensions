@@ -1,0 +1,6 @@
+{
+  "summary": "Search Apple's Human Interface Guidelines by topic and open it on developer.apple.com, or browse one section at a time.",
+  "publisher": "Mystic Coders",
+  "license": "MIT",
+  "notes": "Reads developer.apple.com, the same data the HIG site loads, on every run. All searches Foundations, Patterns, Components, Inputs and Technologies; Getting Started has its own entry in the menu. Not affiliated with Apple."
+}

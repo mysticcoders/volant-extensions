@@ -1,0 +1,6 @@
+{
+  "summary": "Search the names of Apple's SF Symbols and copy one, with its categories, the iOS and macOS versions that introduced it, and its SwiftUI, UIKit and AppKit code.",
+  "publisher": "Mystic Coders",
+  "license": "MIT",
+  "notes": "Works offline and reads no websites. The name list was generated from the symbol metadata in macOS 27; it holds names only, and Volant cannot draw the symbols themselves in rows. Not affiliated with Apple. SF Symbols is a trademark of Apple Inc."
+}

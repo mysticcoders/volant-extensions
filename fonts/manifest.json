@@ -1,0 +1,44 @@
+{
+  "abiVersion": 1,
+  "id": "community.volant.fonts",
+  "name": "Google Fonts",
+  "version": "0.1.0",
+  "module": "fonts.wasm",
+  "capabilities": [],
+  "hosts": [
+    "api.fontsource.org"
+  ],
+  "output": "items",
+  "mode": "list",
+  "placeholder": "Search fonts, such as Inter",
+  "timeoutSeconds": 2,
+  "sha256": "4f7c026bc7037545a7144534a3d047a06f52019ce1f10387799621676f46d5c4",
+  "filters": [
+    {
+      "id": "all",
+      "title": "All"
+    },
+    {
+      "id": "sans-serif",
+      "title": "Sans Serif"
+    },
+    {
+      "id": "serif",
+      "title": "Serif"
+    },
+    {
+      "id": "display",
+      "title": "Display"
+    },
+    {
+      "id": "handwriting",
+      "title": "Handwriting"
+    },
+    {
+      "id": "monospace",
+      "title": "Monospace"
+    }
+  ],
+  "icon": "icon.webp",
+  "iconSha256": "20608ea3059fefc15eebd012f2e70b595d5a11643e4fc376d24c9560f7095ae4"
+}

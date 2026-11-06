@@ -1,0 +1,15 @@
+{
+  "abiVersion": 1,
+  "id": "community.volant.sfsymbols",
+  "name": "SF Symbols",
+  "version": "0.1.0",
+  "module": "sfsymbols.wasm",
+  "capabilities": [],
+  "output": "items",
+  "mode": "search",
+  "placeholder": "Search symbol names, such as heart.fill",
+  "timeoutSeconds": 2,
+  "sha256": "7592ff7ebc39d6dd750823b25a56e89f69329f2f29d1730c9daf3a888f929eb1",
+  "icon": "icon.webp",
+  "iconSha256": "0ab6afd3e44c010d1d1b987367e3a4137fbdd0428d22c0239a08434e87cd9b80"
+}

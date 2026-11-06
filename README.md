@@ -25,6 +25,11 @@ Extensions for [Volant](https://usevolant.com), the macOS launcher. Each folder 
 | [Case Converter](case) | Rust | `case`, `case <text>` | nothing (offline) | The text in camelCase, PascalCase, snake_case, SCREAMING_SNAKE_CASE, kebab-case, Title Case, Sentence case, lower case, UPPER CASE and dot.case |
 | [Encode/Decode](encode) | Rust | `encode`, `encode <text>` | nothing (offline) | Base64, Base64URL, URL and HTML encodings, and decodings when the text already is one |
 | [Hash](hash) | Rust | `hash`, `hash <text>` | nothing (offline) | SHA-256, SHA-1, MD5 and SHA-512 digests in lowercase hex |
+| [Characters](characters) | Rust | `characters`, `characters <name>` | nothing (offline) | Typographic and special characters by name: dashes, curly quotes, arrows, math, currency, legal marks, fractions and keyboard symbols |
+| [Fancy Text](fancytext) | Rust | `fancy text`, `fancy text <text>` | nothing (offline) | The text in bold, italic, script, fraktur, double-struck, monospace, small caps, circled, upside down and other Unicode styles |
+| [SF Symbols](sfsymbols) | Rust | `sf symbols <name>` | nothing (offline) | SF Symbol names matching a search, with categories and the iOS and macOS versions that introduced them |
+| [Apple HIG](hig) | Rust | `apple hig`, `apple hig <topic>` | `developer.apple.com` | Human Interface Guidelines topics matching a search, or one section's topics |
+| [Google Fonts](fonts) | Rust | `google fonts`, `google fonts <name>` | `api.fontsource.org` | Font families matching a name, or one category's, with weights, styles and the Fontsource install command |
 
 Return opens a story or package; Command-Return opens its discussion, homepage or repository in your browser.
 
@@ -40,7 +45,7 @@ name, reading the package's releases feed first and then only its latest release
 JSON can pass Volant's 512 KB limit; Return on its `uv add` or `pip install` row copies it, and Docker
 Hub's `docker pull` row works the same way. Hacker News adds a dropdown at the end of the field (Top, New,
 Ask HN, Show HN; Command-P picks the next one) and searches within the chosen page, and shows each
-story's points, comments and site as badges. Wikipedia, npm, Homebrew, crates.io, PyPI, Docker Hub, MDN, Maps and Stack Overflow declare `"mode": "search"`, so they wait for
+story's points, comments and site as badges. Wikipedia, npm, Homebrew, crates.io, PyPI, Docker Hub, MDN, Maps, Stack Overflow and SF Symbols declare `"mode": "search"`, so they wait for
 you to type; the others show their list at once. Older Volant versions ignore `mode` and `placeholder`.
 
 Service Status reads all four status pages at once and shows each service's overall status, with
@@ -66,7 +71,26 @@ Word Count, Case Converter, Encode/Decode and Hash work offline and list no host
 you type, or, with the field empty, the clipboard's text, and each row says which. They ask once to read
 your clipboard's text when you run them (Volant 0.3.24 or later); Volant reads it only as a run starts,
 and the extensions never store it. Return on a row copies its result. Volant copies at most 300
-characters from a row, so a longer result shows its length instead of a cut-off copy.
+characters from a row, so a longer result shows its length instead of a cut-off copy. Fancy Text works
+the same way, showing the text in sixteen Unicode styles from the Mathematical Alphanumeric Symbols and
+other blocks, with the letters Unicode keeps elsewhere (script B is ℬ, italic h is ℎ) in place.
+
+Characters and SF Symbols also work offline. Characters finds a character by name, alias, HTML entity or
+code point, and lists the common ones with the field empty; Return copies it. Volant trims spaces from
+a row's title, so invisible characters such as the no-break space and zero-width joiner show and copy
+their HTML entity instead. SF Symbols searches the names of Apple's SF Symbols, from a list
+`sfsymbols/generate.py` writes from the symbol metadata macOS ships (names, categories, keywords and
+releases only, never the glyphs); the committed list comes from macOS 27. Return copies a name, and an
+exact name adds its SwiftUI, UIKit and AppKit code. Volant draws only its own row icons, so rows show
+names, not the symbols themselves.
+
+Apple HIG reads the Human Interface Guidelines' own data from developer.apple.com on every run. Its
+dropdown searches All, which covers Foundations, Patterns, Components, Inputs and Technologies in three
+rounds of fetches, or browses one section, Getting Started included. Google Fonts reads font data from
+[Fontsource](https://fontsource.org) (MIT), since Google's Fonts API needs a key; its dropdown picks All
+or one category, Return opens a font's specimen on Google Fonts (or its Fontsource page for fonts Google
+does not host), Command-Return opens it on Fontsource, and the best match adds a row whose Return copies
+`npm install @fontsource/<id>`.
 
 In Hacker News and Lobsters, a story's Actions (Command-K) can pin it, hide it, or hide every story
 from its domain; Show Hidden Stories brings them back, and stories you open show as read. Pinned
@@ -247,8 +271,10 @@ manifest, named by `icon` and pinned by `iconSha256` (`./build.sh` writes the ha
 Homebrew, Lobsters, Maps (OpenStreetMap's), MDN, Stack Overflow, Todoist and Wikipedia use their sites' own
 touch icons; npm, PyPI and Docker Hub use their logos from the npm, PyPI and Docker organizations' GitHub
 avatars; crates.io uses the Cargo logo from the crates.io repository; each is converted to a 128-pixel
-WebP. Weather, Service Status and Public Holidays use original art (`weather/icon.svg`, `status/icon.svg`,
-`holidays/icon.svg`). Hacker News and the Y Combinator logo are trademarks of Y Combinator; the
+WebP. Apple HIG uses developer.apple.com's touch icon and Google Fonts the touch icon fonts.google.com
+links, each converted the same way. Weather, Service Status, Public Holidays, Characters, Fancy Text and
+SF Symbols use original art (`weather/icon.svg`, `status/icon.svg`, `holidays/icon.svg`,
+`characters/icon.svg`, `fancytext/icon.svg`, `sfsymbols/icon.svg`); SF Symbols does not use Apple's app icon. Hacker News and the Y Combinator logo are trademarks of Y Combinator; the
 Lobsters name and logo belong to Lobsters; Todoist is a trademark of Doist; GitHub and the Invertocat logo are trademarks of GitHub, Inc.; the
 Homebrew name and logo belong to the Homebrew project; npm is a trademark of
 npm, Inc., part of GitHub; Wikipedia and its logo are trademarks of the Wikimedia Foundation; Rust,
@@ -257,7 +283,9 @@ are trademarks of the Python Software Foundation; Docker and the Docker logo are
 Inc.; MDN, Mozilla and the MDN logo are trademarks of the Mozilla Foundation; OpenStreetMap and its logo
 are trademarks of the OpenStreetMap Foundation; Stack Overflow and its logo are trademarks of Stack
 Exchange, Inc.; Claude and Anthropic are trademarks of Anthropic, PBC; OpenAI is a trademark of OpenAI;
-Cloudflare is a trademark of Cloudflare, Inc.; Apple Maps is a trademark of Apple Inc. These extensions
+Cloudflare is a trademark of Cloudflare, Inc.; Apple, the Apple logo, Apple Maps, SF Symbols and Human
+Interface Guidelines are trademarks of Apple Inc.; Google Fonts is a trademark of Google LLC; Fontsource
+belongs to the Fontsource project. These extensions
 are unofficial and not endorsed by any of them, and the MIT license below covers the code, not these marks.
 
 ## Dependency audit

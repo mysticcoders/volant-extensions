@@ -1,0 +1,6 @@
+{
+  "summary": "Find Google Fonts by name or browse a category, with weights, styles and subsets, and open a font's specimen or copy its Fontsource install command.",
+  "publisher": "Mystic Coders",
+  "license": "MIT",
+  "notes": "Reads api.fontsource.org, since Google's own Fonts API needs a key. Font data by Fontsource (MIT). Not affiliated with Google or Fontsource. Google Fonts is a trademark of Google LLC."
+}

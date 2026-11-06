@@ -1,0 +1,6 @@
+{
+  "summary": "Find typographic and special characters by name, such as the em dash, curly quotes, arrows, math, currency and the Mac's keyboard symbols, ready to copy.",
+  "publisher": "Mystic Coders",
+  "license": "MIT",
+  "notes": "Works offline and reads no websites. Search by name, alias, HTML entity or code point; each row shows the character's name, code point and HTML entity. Volant trims spaces from rows, so invisible characters such as the no-break space copy their HTML entity instead."
+}

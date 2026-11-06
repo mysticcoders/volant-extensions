@@ -1,0 +1,48 @@
+{
+  "abiVersion": 1,
+  "id": "community.volant.hig",
+  "name": "Apple HIG",
+  "version": "0.1.0",
+  "module": "hig.wasm",
+  "capabilities": [],
+  "hosts": [
+    "developer.apple.com"
+  ],
+  "output": "items",
+  "mode": "list",
+  "placeholder": "Search the Human Interface Guidelines",
+  "timeoutSeconds": 2,
+  "sha256": "c23c276f77458ac7ef58681534f2ec2141c74190f06c4e6cea218c3234a8aa72",
+  "filters": [
+    {
+      "id": "all",
+      "title": "All"
+    },
+    {
+      "id": "getting-started",
+      "title": "Getting Started"
+    },
+    {
+      "id": "foundations",
+      "title": "Foundations"
+    },
+    {
+      "id": "patterns",
+      "title": "Patterns"
+    },
+    {
+      "id": "components",
+      "title": "Components"
+    },
+    {
+      "id": "inputs",
+      "title": "Inputs"
+    },
+    {
+      "id": "technologies",
+      "title": "Technologies"
+    }
+  ],
+  "icon": "icon.webp",
+  "iconSha256": "a9e0ddb33d153980e7a24498345c1aabae33ee4ac1066635199475ca1f38e33e"
+}
