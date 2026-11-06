@@ -1,0 +1,6 @@
+{
+  "summary": "Look up a Python package on PyPI by name: its summary, latest version, supported Python and license, with uv add and pip install commands ready to copy.",
+  "publisher": "Mystic Coders",
+  "license": "MIT",
+  "notes": "Reads pypi.org. PyPI has no search API, so type the exact package name. Not affiliated with the Python Software Foundation or PyPI."
+}

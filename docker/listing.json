@@ -1,0 +1,6 @@
+{
+  "summary": "Search container images on Docker Hub: each image's description, stars and pulls, with official images marked and a docker pull command ready to copy.",
+  "publisher": "Mystic Coders",
+  "license": "MIT",
+  "notes": "Reads hub.docker.com. Not affiliated with Docker, Inc."
+}

@@ -1,0 +1,18 @@
+{
+  "abiVersion": 1,
+  "id": "community.volant.docker",
+  "name": "Docker Hub",
+  "version": "0.1.0",
+  "module": "docker.wasm",
+  "capabilities": [],
+  "hosts": [
+    "hub.docker.com"
+  ],
+  "output": "items",
+  "timeoutSeconds": 2,
+  "sha256": "9fcba634fb6cd9152a56169dddcccd5b53c495d1ec3f40274e1fc66c53a93971",
+  "icon": "icon.webp",
+  "iconSha256": "7d25521c2b2a4da3c80f0bfc894f38ed13cc2f7e5d24af45f9e524a863131088",
+  "mode": "search",
+  "placeholder": "Image name or keyword, such as postgres"
+}
