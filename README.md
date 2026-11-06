@@ -21,6 +21,10 @@ Extensions for [Volant](https://usevolant.com), the macOS launcher. Each folder 
 | [PyPI](pypi) | Rust | `pypi <name>` | `pypi.org` | A Python package by exact name, with its `uv add` and `pip install` commands |
 | [Docker Hub](docker) | Rust | `docker <search>` | `hub.docker.com` | Container images matching a name or keyword, with stars, pulls and the `docker pull` command |
 | [MDN](mdn) | Rust | `mdn <search>` | `developer.mozilla.org` | MDN Web Docs pages matching a topic |
+| [Word Count](wordcount) | Rust | `word count`, `word count <text>` | nothing (offline) | Words, characters, sentences, paragraphs, lines, and reading and speaking times |
+| [Case Converter](case) | Rust | `case`, `case <text>` | nothing (offline) | The text in camelCase, PascalCase, snake_case, SCREAMING_SNAKE_CASE, kebab-case, Title Case, Sentence case, lower case, UPPER CASE and dot.case |
+| [Encode/Decode](encode) | Rust | `encode`, `encode <text>` | nothing (offline) | Base64, Base64URL, URL and HTML encodings, and decodings when the text already is one |
+| [Hash](hash) | Rust | `hash`, `hash <text>` | nothing (offline) | SHA-256, SHA-1, MD5 and SHA-512 digests in lowercase hex |
 
 Return opens a story or package; Command-Return opens its discussion, homepage or repository in your browser.
 
@@ -57,6 +61,12 @@ which Volant keeps in your Keychain and adds only to requests to api.todoist.com
 sees it. Type `todo` and a task, such as `todo buy milk tomorrow p1`, and Return adds it with Todoist's
 Quick Add; a task's Actions complete it or move it to tomorrow or next week, and Return opens it in
 Todoist.app, or on the web without the app.
+
+Word Count, Case Converter, Encode/Decode and Hash work offline and list no hosts. Each uses the text
+you type, or, with the field empty, the clipboard's text, and each row says which. They ask once to read
+your clipboard's text when you run them (Volant 0.3.24 or later); Volant reads it only as a run starts,
+and the extensions never store it. Return on a row copies its result. Volant copies at most 300
+characters from a row, so a longer result shows its length instead of a cut-off copy.
 
 In Hacker News and Lobsters, a story's Actions (Command-K) can pin it, hide it, or hide every story
 from its domain; Show Hidden Stories brings them back, and stories you open show as read. Pinned
