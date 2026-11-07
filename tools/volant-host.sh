@@ -27,8 +27,13 @@ if CommandLine.arguments[2] == "2" {
     ExtensionHost().run(module: module, capabilities: [], input: input, timeout: 10, reply: reply)
 }
 SWIFT
+# Volant 0.3.37 and later draw SVG row previews in the extension host, from shared sources it compiles in.
+shared=()
+for source in ExtensionSVGRasterizer.swift ExtensionImageDecoding.swift; do
+  [ -f "$volant/Shared/$source" ] && shared+=("$volant/Shared/$source")
+done
 swiftc -O -I "$bin" -I "$bin/Modules" -L "$bin" -lVolantCore "$volant/VolantExtensionHost/ExtensionHost.swift" \
-  "$volant/VolantExtensionHost/WASICommand.swift" "$cache/main.swift" -o "$cache/run" 2>&1 | rg -v "warning" >&2 || true
+  "$volant/VolantExtensionHost/WASICommand.swift" ${shared[@]+"${shared[@]}"} "$cache/main.swift" -o "$cache/run" 2>&1 | rg -v "warning" >&2 || true
 printf '%s' '<?xml version="1.0" encoding="UTF-8"?><plist version="1.0"><dict><key>com.apple.security.cs.allow-jit</key><true/></dict></plist>' > "$cache/jit.plist"
 codesign --force --sign - --options runtime --entitlements "$cache/jit.plist" "$cache/run" 2>/dev/null
 "$cache/run" "$module" "$abi"
