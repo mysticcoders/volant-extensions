@@ -106,7 +106,10 @@ come first, copying a logo's SVG from svgl.app, with rows for its dark version a
 opens the brand's website and Command-Return its brand guidelines. Simple Icons' rows follow, up to 20,
 exact matches first, each with its brand color as a badge; they copy the single-color SVG from
 cdn.jsdelivr.net (`simple-icons@16`), and Return opens it. Each search reads Simple Icons' whole index,
-about 450 KB, which Svgl searches itself; if one source fails the other's rows still show.
+about 450 KB, which Svgl searches itself; if one source fails the other's rows still show. From 0.3.0 (Volant 0.3.37 or
+later) each row also shows the logo it copies, once you allow "Show images from its sites in its rows";
+Volant checks each SVG and draws it in its extension helper, which has no network access, and logos
+that use filters or masks keep the extension's icon.
 
 Get Favicon turns a domain or URL into its host and copies the site's icon from Google's and
 DuckDuckGo's favicon services. Rows for 32, 64, 128 and 256 pixels copy a PNG from Google, which sends

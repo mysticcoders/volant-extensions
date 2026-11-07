@@ -163,6 +163,8 @@ struct Row {
     secondary_title: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     copy: Option<Copy>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    image: Option<Image>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     badges: Vec<Badge>,
 }
@@ -171,6 +173,11 @@ struct Row {
 /// owner chooses Copy.
 #[derive(Serialize, Debug, PartialEq)]
 struct Copy { url: String, #[serde(rename = "type")] kind: &'static str, title: &'static str }
+
+/// What Volant 0.3.37 and later draw at the row's start once the owner allows row images: the same
+/// SVG the row copies, checked and drawn in Volant's no-network extension helper.
+#[derive(Serialize, Debug, PartialEq)]
+struct Image { url: String }
 
 /// A row badge with only text. Volant 0.3.8 and later show it in place of the extension's name.
 #[derive(Serialize, Debug, PartialEq)]
@@ -228,6 +235,7 @@ fn variant_row(title: &str, suffix: &str, badge: &str, url: &str) -> Option<Row>
         title: [title, suffix].concat(),
         subtitle: Some(SVG_HINT.to_string()),
         url: Some(url.to_string()),
+        image: Some(Image { url: url.to_string() }),
         copy: Some(copy),
         badges: vec![Badge { text: badge.to_string() }],
         ..Default::default()
@@ -254,6 +262,7 @@ fn rows(logo: &Logo) -> Vec<Row> {
         secondary_title: brand.as_ref().map(|_| BRAND_TITLE.to_string()),
         secondary_url: brand,
         copy: copy(light),
+        image: is_library_svg(light).then(|| Image { url: light.to_string() }),
         badges: Vec::new(),
     };
     let mut rows = vec![main];
@@ -303,6 +312,7 @@ fn simple_icon_row(icon: &SimpleIcon, slug: &str) -> Row {
         title: icon.title.trim().to_string(),
         subtitle: Some(SIMPLE_ICONS_HINT.to_string()),
         url: Some(url.clone()),
+        image: Some(Image { url: url.clone() }),
         copy: Some(Copy { url, kind: SVG, title: COPY_SVG }),
         badges,
         ..Default::default()
@@ -489,6 +499,7 @@ mod tests {
         assert_eq!(rows[0]["url"], "https://cdn.jsdelivr.net/npm/simple-icons@16/icons/nike.svg");
         assert_eq!(rows[0]["copy"], serde_json::json!({"url":"https://cdn.jsdelivr.net/npm/simple-icons@16/icons/nike.svg","type":"svg","title":"Copy SVG"}));
         assert_eq!(rows[0]["badges"], serde_json::json!([{"text":"#111111"}]));
+        assert_eq!(rows[0]["image"], serde_json::json!({"url":"https://cdn.jsdelivr.net/npm/simple-icons@16/icons/nike.svg"}), "Each row previews the SVG it copies");
         assert_eq!(titles(&render_both("airbus", (NOT_FOUND, SVGL_NOT_FOUND), (OK, INDEX))), ["Airbus"]);
         assert_eq!(titles(&render_both("air", (NOT_FOUND, SVGL_NOT_FOUND), (OK, INDEX))), ["Airbnb", "Airbus"]);
     }
@@ -571,9 +582,9 @@ mod tests {
     }
 
     #[test]
-    fn manifest_asks_to_write_the_clipboard_and_reach_three_hosts() {
+    fn manifest_asks_to_copy_and_show_images_and_reach_three_hosts() {
         let manifest: serde_json::Value = serde_json::from_str(MANIFEST).unwrap();
-        assert_eq!(manifest["permissions"], serde_json::json!(["clipboard-write"]));
+        assert_eq!(manifest["permissions"], serde_json::json!(["clipboard-write", "row-images"]));
         assert_eq!(manifest["hosts"], serde_json::json!(["api.svgl.app", "svgl.app", "cdn.jsdelivr.net"]));
     }
 }
