@@ -29,7 +29,7 @@ const ICO_SUFFIX: &str = ".ico";
 const SITE_SCHEME: &str = "https://";
 const SCHEME_SEPARATOR: &str = "://";
 const PNG: &str = "png";
-const ICO: &str = "ico";
+const ANY_IMAGE: &str = "image";
 const SIZES: [u32; 4] = [32, 64, 128, 256];
 const COPY_PNG: [&str; 4] = ["Copy PNG, up to 32 px", "Copy PNG, up to 64 px", "Copy PNG, up to 128 px", "Copy PNG, up to 256 px"];
 const PNG_TITLE_END: &str = " px PNG";
@@ -70,12 +70,19 @@ struct Row {
     secondary_title: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     copy: Option<Copy>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    image: Option<Image>,
 }
 
 /// What a Volant release with row copying puts on the clipboard: the image at `url`, fetched when the
 /// owner chooses Copy.
 #[derive(Serialize, Debug, PartialEq)]
 struct Copy { url: String, #[serde(rename = "type")] kind: &'static str, title: &'static str }
+
+/// What Volant 0.3.36 and later show at the row's start, through its sandboxed fetch helper, when the
+/// owner allows row images: the same icon the row copies.
+#[derive(Serialize, Debug, PartialEq)]
+struct Image { url: String }
 
 /// Whether one DNS label is letters, digits and hyphens, not starting or ending with a hyphen.
 fn is_label(label: &str) -> bool {
@@ -106,7 +113,7 @@ pub fn ico_url(host: &str) -> String {
     [DUCKDUCKGO_ICONS, host, ICO_SUFFIX].concat()
 }
 
-/// A row whose link and copy are the image at `url`, with the site as its second link.
+/// A row whose link, copy and preview are the image at `url`, with the site as its second link.
 fn image_row(host: &str, title: &str, subtitle: String, url: String, kind: &'static str, copy_title: &'static str) -> Row {
     Row {
         title: [host, SEPARATOR, title].concat(),
@@ -114,6 +121,7 @@ fn image_row(host: &str, title: &str, subtitle: String, url: String, kind: &'sta
         url: Some(url.clone()),
         secondary_url: Some([SITE_SCHEME, host].concat()),
         secondary_title: Some(OPEN_SITE.to_string()),
+        image: Some(Image { url: url.clone() }),
         copy: Some(Copy { url, kind, title: copy_title }),
     }
 }
@@ -126,7 +134,7 @@ fn rows(host: &str) -> Vec<Row> {
         let subtitle = [PNG_HINT_START, &size_text, PNG_HINT_END].concat();
         image_row(host, &title, subtitle, png_url(host, *size), PNG, copy_title)
     }).collect();
-    rows.push(image_row(host, ICO_TITLE, ICO_HINT.to_string(), ico_url(host), ICO, COPY_ICO));
+    rows.push(image_row(host, ICO_TITLE, ICO_HINT.to_string(), ico_url(host), ANY_IMAGE, COPY_ICO));
     rows
 }
 
@@ -206,8 +214,11 @@ mod tests {
         assert_eq!(rows[2]["subtitle"], "From Google · up to 128 px, smaller when the site has no larger icon");
         assert_eq!(rows[2]["url"], png.as_str(), "Return opens the PNG");
         assert_eq!(rows[2]["copy"], serde_json::json!({"url":png,"type":"png","title":"Copy PNG, up to 128 px"}));
+        assert_eq!(rows[2]["image"], serde_json::json!({"url":png}), "Each row previews the icon it copies");
         assert_eq!(rows[4]["subtitle"], ICO_HINT);
-        assert_eq!(rows[4]["copy"], serde_json::json!({"url":"https://icons.duckduckgo.com/ip3/www.apple.com.ico","type":"ico","title":"Copy ICO (DuckDuckGo)"}));
+        assert_eq!(rows[4]["copy"], serde_json::json!({"url":"https://icons.duckduckgo.com/ip3/www.apple.com.ico","type":"image","title":"Copy ICO (DuckDuckGo)"}),
+                   "DuckDuckGo answers with ICO or PNG, so Volant identifies the image itself");
+        assert_eq!(rows[4]["image"], serde_json::json!({"url":"https://icons.duckduckgo.com/ip3/www.apple.com.ico"}));
         for row in rows {
             assert_eq!(row["secondaryURL"], "https://www.apple.com");
             assert_eq!(row["secondaryTitle"], OPEN_SITE);
@@ -229,9 +240,9 @@ mod tests {
     }
 
     #[test]
-    fn manifest_asks_to_write_the_clipboard_and_reach_both_icon_hosts() {
+    fn manifest_asks_to_copy_and_show_images_and_reach_both_icon_hosts() {
         let manifest: serde_json::Value = serde_json::from_str(MANIFEST).unwrap();
-        assert_eq!(manifest["permissions"], serde_json::json!(["clipboard-write"]));
+        assert_eq!(manifest["permissions"], serde_json::json!(["clipboard-write", "row-images"]));
         assert_eq!(manifest["hosts"], serde_json::json!(["t1.gstatic.com", "icons.duckduckgo.com"]));
     }
 }

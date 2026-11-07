@@ -111,8 +111,11 @@ about 450 KB, which Svgl searches itself; if one source fails the other's rows s
 Get Favicon turns a domain or URL into its host and copies the site's icon from Google's and
 DuckDuckGo's favicon services. Rows for 32, 64, 128 and 256 pixels copy a PNG from Google, which sends
 the largest icon it has up to that size and never enlarges one, so a site with only a 32-pixel icon
-gets 32 pixels in every row; the last row copies DuckDuckGo's ICO. A site neither service knows, or
-one without an ICO, gets a placeholder or an empty reply that Volant refuses to copy. A site's own SVG
+gets 32 pixels in every row; the last row copies DuckDuckGo's icon, which Volant identifies itself
+since DuckDuckGo answers with an ICO or a PNG. From 0.3.0 (Volant 0.3.36 or later) each row also shows
+the icon it copies, once you allow "Show images from its sites in its rows"; Volant's sandboxed fetch
+helper downloads and shrinks it. A site neither service knows gets a placeholder or an empty reply that
+Volant refuses to copy. A site's own SVG
 or touch icon is out of reach, because Volant lets an extension read only the fixed hosts its manifest
 lists. Return opens the icon and Command-Return the site.
 
