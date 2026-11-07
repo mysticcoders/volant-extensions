@@ -1,6 +1,6 @@
 {
-  "summary": "Search svgl's library of brand logos and copy a logo's SVG, with its dark version and wordmark when svgl has them.",
+  "summary": "Search svgl's brand logos and the Simple Icons set and copy a logo's SVG, with svgl's dark versions and wordmarks and Simple Icons' brand colors.",
   "publisher": "Mystic Coders",
   "license": "MIT",
-  "notes": "Reads api.svgl.app and, only when you choose Copy, the SVG from svgl.app. Copying needs a Volant release with row copying; older versions open the brand's website or the SVG instead. Logos belong to their owners. Not affiliated with svgl."
+  "notes": "Reads api.svgl.app and Simple Icons' index (about 450 KB) from cdn.jsdelivr.net on each search, and, only when you choose Copy, the SVG from svgl.app or cdn.jsdelivr.net. Simple Icons (https://simpleicons.org) is CC0; its marks are single-color. Copying needs Volant 0.3.35 or later; older versions open the brand's website or the SVG instead. Logos and brand marks remain their owners' trademarks. Not affiliated with svgl or Simple Icons."
 }

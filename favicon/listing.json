@@ -1,6 +1,6 @@
 {
-  "summary": "Type a domain or URL and copy its site's icon, from DuckDuckGo's icon service.",
+  "summary": "Type a domain or URL and copy its site's icon as a PNG up to 256 pixels, or as an ICO, from Google's and DuckDuckGo's favicon services.",
   "publisher": "Mystic Coders",
   "license": "MIT",
-  "notes": "Reads icons.duckduckgo.com only when you choose Copy. Copying needs a Volant release with row copying; older versions open the icon in your browser instead. DuckDuckGo answers sites without an icon with a placeholder. Not affiliated with DuckDuckGo."
+  "notes": "Reads t1.gstatic.com and icons.duckduckgo.com only when you choose Copy. Google sends the largest icon it has up to the size you pick, never enlarged. Sites a service has no icon for, or no ICO, can't be copied. A site's own SVG or touch icon is out of reach, since Volant lets extensions read only the hosts they list. Copying needs Volant 0.3.35 or later; older versions open the icon in your browser instead. Not affiliated with Google or DuckDuckGo."
 }

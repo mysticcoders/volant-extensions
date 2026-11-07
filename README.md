@@ -30,8 +30,8 @@ Extensions for [Volant](https://usevolant.com), the macOS launcher. Each folder 
 | [SF Symbols](sfsymbols) | Rust | `sf symbols <name>` | nothing (offline) | SF Symbol names matching a search, with categories and the iOS and macOS versions that introduced them |
 | [Apple HIG](hig) | Rust | `apple hig`, `apple hig <topic>` | `developer.apple.com` | Human Interface Guidelines topics matching a search, or one section's topics |
 | [Google Fonts](fonts) | Rust | `google fonts`, `google fonts <name>` | `api.fontsource.org` | Font families matching a name, or one category's, with weights, styles and the Fontsource install command |
-| [Svgl](svgl) | Rust | `svgl <brand>` | `api.svgl.app`, `svgl.app` | Brand logos matching a name, with their SVGs ready to copy |
-| [Get Favicon](favicon) | Rust | `get favicon <domain>` | `icons.duckduckgo.com` | A site's icon, ready to copy |
+| [Svgl](svgl) | Rust | `svgl <brand>` | `api.svgl.app`, `svgl.app`, `cdn.jsdelivr.net` | Brand logos from svgl and Simple Icons matching a name, with their SVGs ready to copy |
+| [Get Favicon](favicon) | Rust | `get favicon <domain>` | `t1.gstatic.com`, `icons.duckduckgo.com` | A site's icon as a PNG or ICO, ready to copy |
 
 Return opens a story or package; Command-Return opens its discussion, homepage or repository in your browser.
 
@@ -94,15 +94,27 @@ or one category, Return opens a font's specimen on Google Fonts (or its Fontsour
 does not host), Command-Return opens it on Fontsource, and the best match adds a row whose Return copies
 `npm install @fontsource/<id>`.
 
-Svgl and Get Favicon need the Volant release with row copying. Their rows carry
+Svgl and Get Favicon need Volant 0.3.35 or later, the release with row copying. Their rows carry
 `"copy": {"url","type","title"}` and their manifests ask for the `clipboard-write` permission; Volant
-fetches the copy URL, on a host the manifest declares, only when you choose Copy, and puts the image on
-the clipboard. Earlier Volant versions refuse the unknown permission, so these two are published only
-once that release is out. Svgl searches [svgl](https://svgl.app)'s logo library and copies a logo's
-SVG from svgl.app, with rows for its dark version and wordmarks; Return opens the brand's website and
-Command-Return its brand guidelines. Get Favicon turns a domain or URL into its host and copies the
-icon DuckDuckGo's icon service has for it (a placeholder when the site has none); Return opens the icon
-and Command-Return the site.
+fetches the copy URL, on a host the manifest declares, only when you choose Copy, checks the bytes are
+the declared type, and puts the image on the clipboard. Earlier Volant versions refuse the unknown
+permission.
+
+Svgl searches [svgl](https://svgl.app)'s logo library (about 680 logos, mostly software) and the
+[Simple Icons](https://simpleicons.org) set (about 3,500 brands, CC0) in the same round. svgl's rows
+come first, copying a logo's SVG from svgl.app, with rows for its dark version and wordmarks; Return
+opens the brand's website and Command-Return its brand guidelines. Simple Icons' rows follow, up to 20,
+exact matches first, each with its brand color as a badge; they copy the single-color SVG from
+cdn.jsdelivr.net (`simple-icons@16`), and Return opens it. Each search reads Simple Icons' whole index,
+about 450 KB, which Svgl searches itself; if one source fails the other's rows still show.
+
+Get Favicon turns a domain or URL into its host and copies the site's icon from Google's and
+DuckDuckGo's favicon services. Rows for 32, 64, 128 and 256 pixels copy a PNG from Google, which sends
+the largest icon it has up to that size and never enlarges one, so a site with only a 32-pixel icon
+gets 32 pixels in every row; the last row copies DuckDuckGo's ICO. A site neither service knows, or
+one without an ICO, gets a placeholder or an empty reply that Volant refuses to copy. A site's own SVG
+or touch icon is out of reach, because Volant lets an extension read only the fixed hosts its manifest
+lists. Return opens the icon and Command-Return the site.
 
 In Hacker News and Lobsters, a story's Actions (Command-K) can pin it, hide it, or hide every story
 from its domain; Show Hidden Stories brings them back, and stories you open show as read. Pinned
@@ -299,7 +311,8 @@ Exchange, Inc.; Claude and Anthropic are trademarks of Anthropic, PBC; OpenAI is
 Cloudflare is a trademark of Cloudflare, Inc.; Apple, the Apple logo, Apple Maps, SF Symbols and Human
 Interface Guidelines are trademarks of Apple Inc.; Google Fonts is a trademark of Google LLC; Fontsource
 belongs to the Fontsource project; the svgl name and logo belong to the svgl project, and each logo in its
-library to its owner; DuckDuckGo is a trademark of Duck Duck Go, Inc. These extensions
+library to its owner; Simple Icons' icons are CC0, and each brand mark remains its owner's trademark;
+DuckDuckGo is a trademark of Duck Duck Go, Inc.; Google is a trademark of Google LLC. These extensions
 are unofficial and not endorsed by any of them, and the MIT license below covers the code, not these marks.
 
 ## Dependency audit
