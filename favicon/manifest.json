@@ -1,0 +1,21 @@
+{
+  "abiVersion": 1,
+  "id": "community.volant.favicon",
+  "name": "Get Favicon",
+  "version": "0.1.0",
+  "module": "favicon.wasm",
+  "capabilities": [],
+  "hosts": [
+    "icons.duckduckgo.com"
+  ],
+  "output": "items",
+  "permissions": [
+    "clipboard-write"
+  ],
+  "mode": "search",
+  "placeholder": "Type a domain or URL, such as apple.com",
+  "timeoutSeconds": 2,
+  "sha256": "bc0420d28cc750de286404d259817167f41d88ef6aba9f0cbe2cc1d3fbe7d46d",
+  "icon": "icon.webp",
+  "iconSha256": "0effb76dd13f7c65772cae636be4c8de95e2412f1390acfe2af64848fd55df91"
+}

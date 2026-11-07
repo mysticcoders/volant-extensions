@@ -1,0 +1,22 @@
+{
+  "abiVersion": 1,
+  "id": "community.volant.svgl",
+  "name": "Svgl",
+  "version": "0.1.0",
+  "module": "svgl.wasm",
+  "capabilities": [],
+  "hosts": [
+    "api.svgl.app",
+    "svgl.app"
+  ],
+  "output": "items",
+  "permissions": [
+    "clipboard-write"
+  ],
+  "mode": "search",
+  "placeholder": "Search logos, such as Vercel",
+  "timeoutSeconds": 2,
+  "sha256": "d557f6c565460c2cf571eb25c7dfcfa085401496289e9d3c39b899a97ca7b42b",
+  "icon": "icon.webp",
+  "iconSha256": "82b7a583321fdca5960173a6d81845299bb175fbaebeb06af2c699bcb6e522ed"
+}

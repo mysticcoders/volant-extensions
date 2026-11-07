@@ -30,6 +30,8 @@ Extensions for [Volant](https://usevolant.com), the macOS launcher. Each folder 
 | [SF Symbols](sfsymbols) | Rust | `sf symbols <name>` | nothing (offline) | SF Symbol names matching a search, with categories and the iOS and macOS versions that introduced them |
 | [Apple HIG](hig) | Rust | `apple hig`, `apple hig <topic>` | `developer.apple.com` | Human Interface Guidelines topics matching a search, or one section's topics |
 | [Google Fonts](fonts) | Rust | `google fonts`, `google fonts <name>` | `api.fontsource.org` | Font families matching a name, or one category's, with weights, styles and the Fontsource install command |
+| [Svgl](svgl) | Rust | `svgl <brand>` | `api.svgl.app`, `svgl.app` | Brand logos matching a name, with their SVGs ready to copy |
+| [Get Favicon](favicon) | Rust | `get favicon <domain>` | `icons.duckduckgo.com` | A site's icon, ready to copy |
 
 Return opens a story or package; Command-Return opens its discussion, homepage or repository in your browser.
 
@@ -45,7 +47,7 @@ name, reading the package's releases feed first and then only its latest release
 JSON can pass Volant's 512 KB limit; Return on its `uv add` or `pip install` row copies it, and Docker
 Hub's `docker pull` row works the same way. Hacker News adds a dropdown at the end of the field (Top, New,
 Ask HN, Show HN; Command-P picks the next one) and searches within the chosen page, and shows each
-story's points, comments and site as badges. Wikipedia, npm, Homebrew, crates.io, PyPI, Docker Hub, MDN, Maps, Stack Overflow and SF Symbols declare `"mode": "search"`, so they wait for
+story's points, comments and site as badges. Wikipedia, npm, Homebrew, crates.io, PyPI, Docker Hub, MDN, Maps, Stack Overflow, SF Symbols, Svgl and Get Favicon declare `"mode": "search"`, so they wait for
 you to type; the others show their list at once. Older Volant versions ignore `mode` and `placeholder`.
 
 Service Status reads all four status pages at once and shows each service's overall status, with
@@ -91,6 +93,16 @@ rounds of fetches, or browses one section, Getting Started included. Google Font
 or one category, Return opens a font's specimen on Google Fonts (or its Fontsource page for fonts Google
 does not host), Command-Return opens it on Fontsource, and the best match adds a row whose Return copies
 `npm install @fontsource/<id>`.
+
+Svgl and Get Favicon need the Volant release with row copying. Their rows carry
+`"copy": {"url","type","title"}` and their manifests ask for the `clipboard-write` permission; Volant
+fetches the copy URL, on a host the manifest declares, only when you choose Copy, and puts the image on
+the clipboard. Earlier Volant versions refuse the unknown permission, so these two are published only
+once that release is out. Svgl searches [svgl](https://svgl.app)'s logo library and copies a logo's
+SVG from svgl.app, with rows for its dark version and wordmarks; Return opens the brand's website and
+Command-Return its brand guidelines. Get Favicon turns a domain or URL into its host and copies the
+icon DuckDuckGo's icon service has for it (a placeholder when the site has none); Return opens the icon
+and Command-Return the site.
 
 In Hacker News and Lobsters, a story's Actions (Command-K) can pin it, hide it, or hide every story
 from its domain; Show Hidden Stories brings them back, and stories you open show as read. Pinned
@@ -272,9 +284,10 @@ Homebrew, Lobsters, Maps (OpenStreetMap's), MDN, Stack Overflow, Todoist and Wik
 touch icons; npm, PyPI and Docker Hub use their logos from the npm, PyPI and Docker organizations' GitHub
 avatars; crates.io uses the Cargo logo from the crates.io repository; each is converted to a 128-pixel
 WebP. Apple HIG uses developer.apple.com's touch icon and Google Fonts the touch icon fonts.google.com
-links, each converted the same way. Weather, Service Status, Public Holidays, Characters, Fancy Text and
-SF Symbols use original art (`weather/icon.svg`, `status/icon.svg`, `holidays/icon.svg`,
-`characters/icon.svg`, `fancytext/icon.svg`, `sfsymbols/icon.svg`); SF Symbols does not use Apple's app icon. Hacker News and the Y Combinator logo are trademarks of Y Combinator; the
+links, each converted the same way. Svgl uses the app icon from svgl.app's web manifest.
+Weather, Service Status, Public Holidays, Characters, Fancy Text, SF Symbols and Get Favicon use original
+art (`weather/icon.svg`, `status/icon.svg`, `holidays/icon.svg`, `characters/icon.svg`,
+`fancytext/icon.svg`, `sfsymbols/icon.svg`, `favicon/icon.svg`); SF Symbols does not use Apple's app icon. Hacker News and the Y Combinator logo are trademarks of Y Combinator; the
 Lobsters name and logo belong to Lobsters; Todoist is a trademark of Doist; GitHub and the Invertocat logo are trademarks of GitHub, Inc.; the
 Homebrew name and logo belong to the Homebrew project; npm is a trademark of
 npm, Inc., part of GitHub; Wikipedia and its logo are trademarks of the Wikimedia Foundation; Rust,
@@ -285,7 +298,8 @@ are trademarks of the OpenStreetMap Foundation; Stack Overflow and its logo are 
 Exchange, Inc.; Claude and Anthropic are trademarks of Anthropic, PBC; OpenAI is a trademark of OpenAI;
 Cloudflare is a trademark of Cloudflare, Inc.; Apple, the Apple logo, Apple Maps, SF Symbols and Human
 Interface Guidelines are trademarks of Apple Inc.; Google Fonts is a trademark of Google LLC; Fontsource
-belongs to the Fontsource project. These extensions
+belongs to the Fontsource project; the svgl name and logo belong to the svgl project, and each logo in its
+library to its owner; DuckDuckGo is a trademark of Duck Duck Go, Inc. These extensions
 are unofficial and not endorsed by any of them, and the MIT license below covers the code, not these marks.
 
 ## Dependency audit
