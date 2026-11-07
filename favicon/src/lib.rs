@@ -1,12 +1,20 @@
-//! Get Favicon for Volant: type a domain or a URL and get its site's icon from DuckDuckGo's icon
-//! service, `https://icons.duckduckgo.com/ip3/<host>.ico`. The extension fetches nothing itself: the
-//! plan answers with the row straight away, since an icon is binary and Volant hands modules text only.
+//! Get Favicon for Volant: type a domain or a URL and copy its site's icon. The extension fetches
+//! nothing itself: the plan answers with the rows straight away, since an icon is binary and Volant
+//! hands modules text only.
 //!
-//! The row carries `copy`, `{"url","type":"ico","title":"Copy Image"}`, which a Volant release with
-//! row copying (and the manifest's `clipboard-write` permission) fetches from icons.duckduckgo.com only
-//! when the owner chooses Copy, putting the image on the clipboard. Its link is the same icon URL, so
-//! older Volant versions, which ignore `copy`, open the icon in the browser instead; Command-Return
-//! opens the site. DuckDuckGo answers a site without an icon with 404 and a placeholder image.
+//! Google's favicon service is the main source. Its rows offer a PNG of at most 32, 64, 128 and 256
+//! pixels from `https://t1.gstatic.com/faviconV2?…&url=https://<host>&size=<N>`. Google never enlarges
+//! an icon: it sends the largest one it has for the site up to that size, so a site with only a
+//! 32-pixel icon gets 32 pixels in every row. For a site it knows nothing about it answers 404 with a
+//! placeholder globe, which Volant reports as unavailable instead of copying. The last row copies the
+//! ICO from DuckDuckGo's icon service, `https://icons.duckduckgo.com/ip3/<host>.ico`; DuckDuckGo answers
+//! a site without an ICO with a PNG or an empty body, which Volant refuses to copy as an ICO.
+//!
+//! Each row carries `copy`, `{"url","type","title"}`, which a Volant release with row copying (and the
+//! manifest's `clipboard-write` permission) fetches only when the owner chooses Copy, putting the image
+//! on the clipboard. Its link is the same image URL, so Return opens the icon, as older Volant versions,
+//! which ignore `copy`, also do; Command-Return opens the site. A site's own SVG or touch icon is out of
+//! reach, since Volant lets an extension read only the fixed hosts its manifest lists.
 //!
 //! Typed text is reduced to a host: the scheme, credentials, port, path, query and fragment are
 //! dropped, then each label must be letters, digits and inner hyphens, with at least two labels. Hosts
@@ -14,14 +22,23 @@
 use serde::{Deserialize, Serialize};
 use volant_extension_kit::volant_extension_output;
 
-const ICONS: &str = "https://icons.duckduckgo.com/ip3/";
-const ICON_SUFFIX: &str = ".ico";
+const GOOGLE_ICONS: &str = "https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=";
+const GOOGLE_SIZE: &str = "&size=";
+const DUCKDUCKGO_ICONS: &str = "https://icons.duckduckgo.com/ip3/";
+const ICO_SUFFIX: &str = ".ico";
 const SITE_SCHEME: &str = "https://";
 const SCHEME_SEPARATOR: &str = "://";
+const PNG: &str = "png";
 const ICO: &str = "ico";
-const COPY_IMAGE: &str = "Copy Image";
+const SIZES: [u32; 4] = [32, 64, 128, 256];
+const COPY_PNG: [&str; 4] = ["Copy PNG, up to 32 px", "Copy PNG, up to 64 px", "Copy PNG, up to 128 px", "Copy PNG, up to 256 px"];
+const PNG_TITLE_END: &str = " px PNG";
+const PNG_HINT_START: &str = "From Google · up to ";
+const PNG_HINT_END: &str = " px, smaller when the site has no larger icon";
+const ICO_TITLE: &str = "ICO";
+const COPY_ICO: &str = "Copy ICO (DuckDuckGo)";
+const ICO_HINT: &str = "From DuckDuckGo · copies only when the site has an ICO";
 const OPEN_SITE: &str = "Open Site";
-const ICON_HINT: &str = "Favicon from DuckDuckGo";
 const PLAN: &str = "plan";
 const RENDER: &str = "render";
 const PROMPT: &str = "Type a domain or URL, such as apple.com.";
@@ -79,22 +96,38 @@ pub fn host_for(text: &str) -> Option<String> {
     valid.then(|| host.to_string())
 }
 
-/// DuckDuckGo's icon URL for a host.
-pub fn icon_url(host: &str) -> String {
-    [ICONS, host, ICON_SUFFIX].concat()
+/// Google's PNG of at most `size` pixels for a host.
+pub fn png_url(host: &str, size: u32) -> String {
+    [GOOGLE_ICONS, SITE_SCHEME, host, GOOGLE_SIZE, &size.to_string()].concat()
 }
 
-/// The host's row: its icon as the link and the copy, and its site as the second link.
-fn row(host: &str) -> Row {
-    let icon = icon_url(host);
+/// DuckDuckGo's ICO URL for a host.
+pub fn ico_url(host: &str) -> String {
+    [DUCKDUCKGO_ICONS, host, ICO_SUFFIX].concat()
+}
+
+/// A row whose link and copy are the image at `url`, with the site as its second link.
+fn image_row(host: &str, title: &str, subtitle: String, url: String, kind: &'static str, copy_title: &'static str) -> Row {
     Row {
-        title: host.to_string(),
-        subtitle: Some([ICON_HINT, &icon].join(SEPARATOR)),
-        url: Some(icon.clone()),
+        title: [host, SEPARATOR, title].concat(),
+        subtitle: Some(subtitle),
+        url: Some(url.clone()),
         secondary_url: Some([SITE_SCHEME, host].concat()),
         secondary_title: Some(OPEN_SITE.to_string()),
-        copy: Some(Copy { url: icon, kind: ICO, title: COPY_IMAGE }),
+        copy: Some(Copy { url, kind, title: copy_title }),
     }
+}
+
+/// The host's rows: Google's PNG at each size, then DuckDuckGo's ICO.
+fn rows(host: &str) -> Vec<Row> {
+    let mut rows: Vec<Row> = SIZES.iter().zip(COPY_PNG).map(|(size, copy_title)| {
+        let size_text = size.to_string();
+        let title = [size_text.as_str(), PNG_TITLE_END].concat();
+        let subtitle = [PNG_HINT_START, &size_text, PNG_HINT_END].concat();
+        image_row(host, &title, subtitle, png_url(host, *size), PNG, copy_title)
+    }).collect();
+    rows.push(image_row(host, ICO_TITLE, ICO_HINT.to_string(), ico_url(host), ICO, COPY_ICO));
+    rows
 }
 
 fn message(title: &str, subtitle: Option<&str>) -> Row {
@@ -108,7 +141,7 @@ pub fn respond(input: &[u8]) -> String {
     if request.phase != PLAN && request.phase != RENDER { return items(vec![message(ONLY_LISTS, None)]); }
     if request.query.trim().is_empty() { return items(vec![message(PROMPT, None)]); }
     match host_for(&request.query) {
-        Some(host) => items(vec![row(&host)]),
+        Some(host) => items(rows(&host)),
         None => items(vec![message(NOT_A_HOST, Some(NOT_A_HOST_HINT))]),
     }
 }
@@ -144,30 +177,45 @@ mod tests {
         assert_eq!(host_for("bad_name.example"), None);
         assert_eq!(host_for("bücher.example"), None);
         assert_eq!(host_for("a..b"), None);
+        assert_eq!(host_for("example.com&size=1"), None, "A host can never add parameters to Google's URL");
         assert_eq!(host_for(&format!("{}.com", "a".repeat(64))), None);
     }
 
     #[test]
-    fn icon_urls_are_on_the_manifest_host() {
+    fn icon_urls_are_on_the_manifest_hosts() {
         for text in ["apple.com", "https://docs.example.co.uk/x", "xn--bcher-kva.example"] {
-            let url = icon_url(&host_for(text).unwrap());
-            assert!(manifest_permits(MANIFEST, &url), "{url}");
+            let host = host_for(text).unwrap();
+            for size in SIZES {
+                let url = png_url(&host, size);
+                assert!(manifest_permits(MANIFEST, &url), "{url}");
+            }
+            assert!(manifest_permits(MANIFEST, &ico_url(&host)), "{host}");
         }
-        assert_eq!(icon_url("apple.com"), "https://icons.duckduckgo.com/ip3/apple.com.ico");
+        assert_eq!(png_url("apple.com", 128), "https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://apple.com&size=128");
+        assert_eq!(ico_url("apple.com"), "https://icons.duckduckgo.com/ip3/apple.com.ico");
     }
 
     #[test]
-    fn the_plan_answers_with_the_row_and_fetches_nothing() {
+    fn the_plan_answers_with_a_png_row_per_size_and_an_ico_row() {
         let reply = run("plan", "https://www.apple.com/mac/");
-        assert!(reply.get("fetch").is_none());
-        let row = &reply["items"][0];
-        assert_eq!(row["title"], "www.apple.com");
-        assert_eq!(row["subtitle"], "Favicon from DuckDuckGo · https://icons.duckduckgo.com/ip3/www.apple.com.ico");
-        assert_eq!(row["url"], "https://icons.duckduckgo.com/ip3/www.apple.com.ico", "Older Volant opens the icon");
-        assert_eq!(row["secondaryURL"], "https://www.apple.com");
-        assert_eq!(row["secondaryTitle"], OPEN_SITE);
-        assert_eq!(row["copy"], serde_json::json!({"url":"https://icons.duckduckgo.com/ip3/www.apple.com.ico","type":"ico","title":"Copy Image"}));
-        assert_eq!(run("render", "apple.com")["items"][0]["title"], "apple.com");
+        assert!(reply.get("fetch").is_none(), "The plan fetches nothing");
+        let rows = reply["items"].as_array().unwrap();
+        let titles: Vec<&str> = rows.iter().map(|row| row["title"].as_str().unwrap()).collect();
+        assert_eq!(titles, ["www.apple.com · 32 px PNG", "www.apple.com · 64 px PNG", "www.apple.com · 128 px PNG", "www.apple.com · 256 px PNG", "www.apple.com · ICO"]);
+        let png = png_url("www.apple.com", 128);
+        assert_eq!(rows[2]["subtitle"], "From Google · up to 128 px, smaller when the site has no larger icon");
+        assert_eq!(rows[2]["url"], png.as_str(), "Return opens the PNG");
+        assert_eq!(rows[2]["copy"], serde_json::json!({"url":png,"type":"png","title":"Copy PNG, up to 128 px"}));
+        assert_eq!(rows[4]["subtitle"], ICO_HINT);
+        assert_eq!(rows[4]["copy"], serde_json::json!({"url":"https://icons.duckduckgo.com/ip3/www.apple.com.ico","type":"ico","title":"Copy ICO (DuckDuckGo)"}));
+        for row in rows {
+            assert_eq!(row["secondaryURL"], "https://www.apple.com");
+            assert_eq!(row["secondaryTitle"], OPEN_SITE);
+            assert_eq!(row["url"], row["copy"]["url"]);
+            assert!(row["copy"]["title"].as_str().unwrap().chars().count() <= 40);
+            assert!(manifest_permits(MANIFEST, row["copy"]["url"].as_str().unwrap()));
+        }
+        assert_eq!(run("render", "apple.com")["items"][0]["title"], "apple.com · 32 px PNG");
     }
 
     #[test]
@@ -181,9 +229,9 @@ mod tests {
     }
 
     #[test]
-    fn manifest_asks_to_write_the_clipboard_and_reach_one_host() {
+    fn manifest_asks_to_write_the_clipboard_and_reach_both_icon_hosts() {
         let manifest: serde_json::Value = serde_json::from_str(MANIFEST).unwrap();
         assert_eq!(manifest["permissions"], serde_json::json!(["clipboard-write"]));
-        assert_eq!(manifest["hosts"], serde_json::json!(["icons.duckduckgo.com"]));
+        assert_eq!(manifest["hosts"], serde_json::json!(["t1.gstatic.com", "icons.duckduckgo.com"]));
     }
 }
