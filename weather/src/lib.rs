@@ -1,13 +1,16 @@
 //! Weather for Volant: current conditions and a 10-day forecast from Open-Meteo. `weather` uses the
 //! owner's location when the `location` permission is allowed; `weather <place>` looks the place up
-//! first, then fetches its forecast in a second round. Temperatures and wind arrive in metric and are
-//! converted for display when the owner's system uses US units.
+//! first, then fetches its forecast in a second round; `weather in <place>` reads the same. Temperatures
+//! and wind arrive in metric and are converted for display when the owner's system uses US units. The
+//! current-conditions row also carries a `forecast` card with an hourly strip, which Volant 0.4.1 and
+//! later draw under the search field; earlier versions ignore it and show the rows.
 use serde::Deserialize;
-use volant_extension_kit::{encode_query, parse_rfc3339, volant_extension, Item, Location, Reply, Request};
+use serde_json::{json, Value};
+use volant_extension_kit::{encode_query, parse_rfc3339, volant_extension_output, Item, Location, Reply, Request};
 
 const GEOCODE: &str = "https://geocoding-api.open-meteo.com/v1/search?count=1&language=en&format=json&name=";
 const FORECAST: &str = "https://api.open-meteo.com/v1/forecast";
-const FORECAST_FIELDS: &str = "&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=10";
+const FORECAST_FIELDS: &str = "&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&hourly=temperature_2m,weather_code,is_day&forecast_hours=25&timezone=auto&forecast_days=10";
 const ATTRIBUTION_URL: &str = "https://open-meteo.com/";
 const ATTRIBUTION_TITLE: &str = "Weather Data by Open-Meteo";
 const GEOCODE_STATE: &str = "geocode";
@@ -30,6 +33,11 @@ const EPOCH_WEEKDAY: i64 = 4;
 const WEEKDAYS: [&str; 7] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS: [&str; 12] = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const UNKNOWN_CONDITION: &str = "Unknown conditions";
+const IN_PREFIX: &str = "in ";
+/// The card's hourly strip starts at the current hour and keeps a day of hours.
+const CARD_HOURS: usize = 24;
+/// `2026-11-14T09`, the part of an Open-Meteo local time that names its hour.
+const HOUR_PREFIX: usize = 13;
 
 /// WMO weather interpretation codes, as Open-Meteo reports them: how each reads in a row, and the
 /// Volant row symbol for it by day and by night.
@@ -87,10 +95,15 @@ struct Place {
 struct Forecast {
     current: Option<Current>,
     daily: Option<Daily>,
+    #[serde(default)]
+    hourly: Option<Hourly>,
 }
 
 #[derive(Deserialize)]
 struct Current {
+    /// The place's local time of these conditions, such as `2026-11-14T09:45`.
+    #[serde(default)]
+    time: Option<String>,
     temperature_2m: Option<f64>,
     apparent_temperature: Option<f64>,
     weather_code: Option<i64>,
@@ -107,6 +120,15 @@ struct Daily {
     temperature_2m_min: Vec<Option<f64>>,
     #[serde(default)]
     precipitation_probability_max: Vec<Option<i64>>,
+}
+
+#[derive(Deserialize)]
+struct Hourly {
+    time: Vec<String>,
+    temperature_2m: Vec<Option<f64>>,
+    weather_code: Vec<Option<i64>>,
+    #[serde(default)]
+    is_day: Vec<Option<i64>>,
 }
 
 /// The forecast request for a point, in metric.
@@ -188,9 +210,18 @@ fn rain_chance(percent: i64) -> String {
     format!("{percent}% chance of rain")
 }
 
+/// The place typed after `weather`, without a leading "in", so `weather in tokyo` looks up Tokyo.
+fn place_query(query: &str) -> &str {
+    let query = query.trim();
+    match query.get(..IN_PREFIX.len()) {
+        Some(start) if start.eq_ignore_ascii_case(IN_PREFIX) => query[IN_PREFIX.len()..].trim_start(),
+        _ => query,
+    }
+}
+
 /// The first round: a forecast for the owner's location, or a lookup of the place they typed.
 fn plan(request: &Request) -> Result<Reply, String> {
-    let query = request.query.trim();
+    let query = place_query(&request.query);
     if !query.is_empty() {
         return Ok(Reply::Continue(vec![geocode_url(query)], GEOCODE_STATE.to_string()));
     }
@@ -207,7 +238,7 @@ fn render(request: &Request) -> Result<Reply, String> {
     let state = request.state.as_deref().unwrap_or_default();
     if state == GEOCODE_STATE {
         let places: Places = serde_json::from_str(&response.body).map_err(|_| UNREADABLE.to_string())?;
-        let place = places.results.first().ok_or_else(|| no_place(request.query.trim()))?;
+        let place = places.results.first().ok_or_else(|| no_place(place_query(&request.query)))?;
         let location = Location { latitude: place.latitude, longitude: place.longitude };
         return Ok(Reply::Continue(vec![forecast_url(location)], format!("{FORECAST_STATE}{}", place_label(place))));
     }
@@ -256,11 +287,69 @@ fn rows(label: &str, forecast: &Forecast, us: bool) -> Vec<Item> {
     items
 }
 
+/// The weather card for a forecast: current conditions, today's range, the hours from the current
+/// hour on and each day, in Celsius and the place's own times. None when there is nothing to draw.
+fn card(label: &str, forecast: &Forecast) -> Option<Value> {
+    let current = forecast.current.as_ref();
+    let daily = forecast.daily.as_ref();
+    let now_hour = current.and_then(|current| current.time.as_deref()).and_then(|time| time.get(..HOUR_PREFIX));
+    let hours: Vec<Value> = forecast.hourly.as_ref().map(|hourly| {
+        hourly.time.iter().enumerate()
+            .filter(|(_, time)| now_hour.map_or(true, |now| time.get(..HOUR_PREFIX).map_or(false, |hour| hour >= now)))
+            .filter_map(|(index, time)| {
+                let celsius = hourly.temperature_2m.get(index).copied().flatten()?;
+                let day = hourly.is_day.get(index).copied().flatten() != Some(0);
+                Some(json!({"time": time, "temperature": celsius, "symbol": symbol(hourly.weather_code.get(index).copied().flatten(), day)}))
+            })
+            .take(CARD_HOURS).collect()
+    }).unwrap_or_default();
+    let days: Vec<Value> = daily.map(|daily| {
+        daily.time.iter().enumerate().filter_map(|(index, date)| {
+            let high = daily.temperature_2m_max.get(index).copied().flatten()?;
+            let low = daily.temperature_2m_min.get(index).copied().flatten()?;
+            Some(json!({"date": date, "high": high, "low": low, "symbol": symbol(daily.weather_code.get(index).copied().flatten(), true)}))
+        }).collect()
+    }).unwrap_or_default();
+    let temperature = current.and_then(|current| current.temperature_2m);
+    if temperature.is_none() && hours.is_empty() && days.is_empty() { return None; }
+    let code = current.and_then(|current| current.weather_code);
+    Some(json!({
+        "place": label,
+        "condition": current.map(|_| condition(code)),
+        "symbol": current.and_then(|current| symbol(code, current.is_day != Some(0))),
+        "temperature": temperature,
+        "high": daily.and_then(|daily| daily.temperature_2m_max.first().copied().flatten()),
+        "low": daily.and_then(|daily| daily.temperature_2m_min.first().copied().flatten()),
+        "hours": hours,
+        "days": days,
+    }))
+}
+
 fn handle(request: &Request) -> Result<Reply, String> {
     if request.is_plan() { plan(request) } else { render(request) }
 }
 
-volant_extension!(handle);
+/// The kit's reply, with the weather card added to the current-conditions row when the request
+/// renders a forecast that has one.
+fn respond(input: &[u8]) -> String {
+    let output = volant_extension_kit::handle(input, handle);
+    let Ok(request) = serde_json::from_slice::<Request>(input) else { return output };
+    let label = match request.state.as_deref().and_then(|state| state.strip_prefix(FORECAST_STATE)) {
+        Some(label) if !request.is_plan() => label,
+        _ => return output,
+    };
+    let forecast = match request.responses.first() {
+        Some(response) if response.status == 200 => serde_json::from_str::<Forecast>(&response.body).ok(),
+        _ => None,
+    };
+    let (Some(forecast), Ok(mut reply)) = (forecast, serde_json::from_str::<Value>(&output)) else { return output };
+    let (Some(card), Some(first)) = (card(label, &forecast), reply.pointer_mut("/items/0")) else { return output };
+    if forecast.current.is_none() { return output; }
+    first["forecast"] = card;
+    reply.to_string()
+}
+
+volant_extension_output!(respond);
 
 #[cfg(test)]
 mod tests {
@@ -348,6 +437,53 @@ mod tests {
         let night = r#"{"current":{"temperature_2m":10.0,"weather_code":0,"is_day":0},"daily":null}"#;
         let value = reply(serde_json::json!({"phase":"render","query":"","now":0,"state":"forecast:Paris","responses":[{"url":"u","status":200,"body":night}]}));
         assert_eq!(value["items"][0]["symbol"], "moon");
+    }
+
+    /// Runs the module's own entry point, as the built module answers Volant.
+    fn respond_json(request: serde_json::Value) -> serde_json::Value {
+        serde_json::from_str(&respond(request.to_string().as_bytes())).unwrap()
+    }
+
+    const HOURLY_BODY: &str = r#"{"current":{"time":"2026-11-14T09:45","temperature_2m":13.2,"weather_code":3,"is_day":1},
+        "daily":{"time":["2026-11-14","2026-11-15"],"weather_code":[3,61],"temperature_2m_max":[19.0,17.0],"temperature_2m_min":[9.0,8.0]},
+        "hourly":{"time":["2026-11-14T08:00","2026-11-14T09:00","2026-11-14T10:00","2026-11-14T22:00"],
+        "temperature_2m":[12.0,13.0,15.0,null],"weather_code":[3,3,1,0],"is_day":[1,1,1,0]}}"#;
+
+    #[test]
+    fn a_forecast_adds_a_card_to_the_current_row() {
+        let value = respond_json(serde_json::json!({"phase":"render","query":"tokyo","now":0,"units":"us","state":"forecast:Tokyo, Japan","responses":[{"url":"u","status":200,"body":HOURLY_BODY}]}));
+        let card = &value["items"][0]["forecast"];
+        assert_eq!(value["items"][0]["title"], "Tokyo, Japan · 56° · Overcast");
+        assert_eq!(card["place"], "Tokyo, Japan");
+        assert_eq!(card["condition"], "Overcast");
+        assert_eq!(card["symbol"], "cloud");
+        assert_eq!(card["temperature"], 13.2);
+        assert_eq!(card["high"], 19.0);
+        assert_eq!(card["low"], 9.0);
+        let hours = card["hours"].as_array().unwrap();
+        assert_eq!(hours.iter().map(|hour| hour["time"].as_str().unwrap()).collect::<Vec<_>>(), ["2026-11-14T09:00", "2026-11-14T10:00"]);
+        assert_eq!(hours[1]["symbol"], "cloud-sun");
+        assert_eq!(card["days"][1], serde_json::json!({"date":"2026-11-15","high":17.0,"low":8.0,"symbol":"rain"}));
+        assert!(value["items"][1].get("forecast").is_none());
+    }
+
+    #[test]
+    fn plans_failures_and_lookups_carry_no_card() {
+        let plan = respond_json(serde_json::json!({"phase":"plan","query":"in tokyo","now":0}));
+        assert!(plan["fetch"][0].as_str().unwrap().ends_with("&name=tokyo"));
+        let busy = respond_json(serde_json::json!({"phase":"render","query":"","now":0,"state":"forecast:Paris","responses":[{"url":"u","status":429,"body":"{}"}]}));
+        assert!(busy["items"][0].get("forecast").is_none());
+        let older = respond_json(serde_json::json!({"phase":"render","query":"","now":0,"state":"forecast:Paris","responses":[{"url":"u","status":200,"body":FORECAST_BODY}]}));
+        assert_eq!(older["items"][0]["forecast"]["hours"], serde_json::json!([]));
+        assert_eq!(older["items"][0]["forecast"]["days"].as_array().unwrap().len(), 2);
+    }
+
+    #[test]
+    fn a_leading_in_is_not_part_of_the_place() {
+        assert_eq!(place_query("in tokyo"), "tokyo");
+        assert_eq!(place_query("  IN  New York "), "New York");
+        assert_eq!(place_query("inverness"), "inverness");
+        assert_eq!(place_query("in"), "in");
     }
 
     #[test]

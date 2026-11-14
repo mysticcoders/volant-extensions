@@ -62,7 +62,7 @@ since modules have no time zone. Stack Overflow uses the Stack Exchange API with
 300 searches a day from one network, and says when that runs out.
 
 Weather and Todoist need Volant 0.3.4 or later. Weather asks once to share your approximate location
-(about 11 km) with it and Open-Meteo; `weather <place>` works without it. Weather data is by
+(about 11 km) with it and Open-Meteo; `weather <place>` (or `weather in <place>`) works without it. In Volant 0.4.1 and later, the current conditions show as a card with an hourly strip and the week, and Tab switches between them. Weather data is by
 [Open-Meteo.com](https://open-meteo.com) (CC BY 4.0). Todoist asks once for your Todoist API token,
 which Volant keeps in your Keychain and adds only to requests to api.todoist.com; the extension never
 sees it. Type `todo` and a task, such as `todo buy milk tomorrow p1`, and Return adds it with Todoist's
