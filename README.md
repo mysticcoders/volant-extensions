@@ -9,7 +9,7 @@ Extensions for [Volant](https://usevolant.com), the macOS launcher. Each folder 
 | [Lobsters](lobsters) | Rust | `lobsters`, `lobsters new`, `lobsters <tag>` | `lobste.rs` | Hottest, newest or one tag |
 | [npm](npm) | TypeScript | `npm <search>` | `registry.npmjs.org` | Packages matching a name or keyword |
 | [Wikipedia](wikipedia) | Python | `wiki <search>` | `en.wikipedia.org` | English Wikipedia articles matching a topic |
-| [Weather](weather) | Rust | `weather`, `weather <place>` | `api.open-meteo.com`, `geocoding-api.open-meteo.com` | Current conditions and a 10-day forecast, for your location or a place |
+| [Meteo Weather](meteo) | Rust | `meteo`, `meteo <place>` | `api.open-meteo.com`, `geocoding-api.open-meteo.com` | Open-Meteo's current conditions, hourly strip and 10-day forecast, for your location or a place |
 | [GitHub](github) | Rust | `github`, `github <search>` | `api.github.com` | Pull requests to review, your pull requests, and issues assigned to or involving you |
 | [Homebrew](homebrew) | Rust | `homebrew <name>` | `formulae.brew.sh` | A formula or cask by exact name, with its install command |
 | [Todoist](todoist) | Rust | `todo`, `todo upcoming`, `todo inbox`, `todo p1`, `todo /<filter>`, `todo <new task>` | `api.todoist.com` | Your tasks; adds, completes and reschedules them |
@@ -61,8 +61,11 @@ a two-letter code typed first, such as `holidays de`, shows another. Dates count
 since modules have no time zone. Stack Overflow uses the Stack Exchange API without a key, which allows
 300 searches a day from one network, and says when that runs out.
 
-Weather and Todoist need Volant 0.3.4 or later. Weather asks once to share your approximate location
-(about 11 km) with it and Open-Meteo; `weather <place>` (or `weather in <place>`) works without it. In Volant 0.4.1 and later, the current conditions show as a card with an hourly strip and the week, and Tab switches between them. Weather data is by
+Meteo Weather and Todoist need Volant 0.3.4 or later. Meteo Weather asks once to share your approximate
+location (about 11 km) with it and Open-Meteo; `meteo <place>` (or `meteo in <place>`) works without it.
+In Volant 0.4.1 and later, the current conditions show as a card with an hourly strip and the week, and
+Tab switches between them. Volant 0.4.1 also has its own `weather` command from Apple Weather; Meteo
+Weather, which replaced the Weather extension, uses its own `meteo` trigger beside it. Weather data is by
 [Open-Meteo.com](https://open-meteo.com) (CC BY 4.0). Todoist asks once for your Todoist API token,
 which Volant keeps in your Keychain and adds only to requests to api.todoist.com; the extension never
 sees it. Type `todo` and a task, such as `todo buy milk tomorrow p1`, and Return adds it with Todoist's
@@ -303,8 +306,8 @@ touch icons; npm, PyPI and Docker Hub use their logos from the npm, PyPI and Doc
 avatars; crates.io uses the Cargo logo from the crates.io repository; each is converted to a 128-pixel
 WebP. Apple HIG uses developer.apple.com's touch icon and Google Fonts the touch icon fonts.google.com
 links, each converted the same way. Svgl uses the app icon from svgl.app's web manifest.
-Weather, Service Status, Public Holidays, Characters, Fancy Text, SF Symbols and Get Favicon use original
-art (`weather/icon.svg`, `status/icon.svg`, `holidays/icon.svg`, `characters/icon.svg`,
+Meteo Weather, Service Status, Public Holidays, Characters, Fancy Text, SF Symbols and Get Favicon use original
+art (`meteo/icon.svg`, `status/icon.svg`, `holidays/icon.svg`, `characters/icon.svg`,
 `fancytext/icon.svg`, `sfsymbols/icon.svg`, `favicon/icon.svg`); SF Symbols does not use Apple's app icon. Hacker News and the Y Combinator logo are trademarks of Y Combinator; the
 Lobsters name and logo belong to Lobsters; Todoist is a trademark of Doist; GitHub and the Invertocat logo are trademarks of GitHub, Inc.; the
 Homebrew name and logo belong to the Homebrew project; npm is a trademark of

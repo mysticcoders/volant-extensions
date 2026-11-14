@@ -1,9 +1,9 @@
 {
   "abiVersion": 1,
-  "id": "community.volant.weather",
-  "name": "Weather",
-  "version": "0.2.0",
-  "module": "weather.wasm",
+  "id": "community.volant.meteo",
+  "name": "Meteo Weather",
+  "version": "1.0.0",
+  "module": "meteo.wasm",
   "capabilities": [],
   "hosts": [
     "api.open-meteo.com",
@@ -14,7 +14,7 @@
   ],
   "output": "items",
   "timeoutSeconds": 2,
-  "sha256": "b32205805af93562417f83f4c17657d68053af5fc0fb74b670afbaf8790cfd32",
+  "sha256": "2ec7b4c87490bcc4ec5e7d54c0e9ece7f52cfb4e33891f5b0944a99f8887519a",
   "icon": "icon.webp",
   "iconSha256": "8994ca3567d4ddf2ca079ef5b856b6ff429c5216ffd5a23151f377ce01f8c7c0"
 }

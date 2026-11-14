@@ -1,6 +1,6 @@
-//! Weather for Volant: current conditions and a 10-day forecast from Open-Meteo. `weather` uses the
-//! owner's location when the `location` permission is allowed; `weather <place>` looks the place up
-//! first, then fetches its forecast in a second round; `weather in <place>` reads the same. Temperatures
+//! Meteo Weather for Volant: current conditions and a 10-day forecast from Open-Meteo. `meteo` uses the
+//! owner's location when the `location` permission is allowed; `meteo <place>` looks the place up
+//! first, then fetches its forecast in a second round; `meteo in <place>` reads the same. Temperatures
 //! and wind arrive in metric and are converted for display when the owner's system uses US units. The
 //! current-conditions row also carries a `forecast` card with an hourly strip, which Volant 0.4.1 and
 //! later draw under the search field; earlier versions ignore it and show the rows.
@@ -16,7 +16,7 @@ const ATTRIBUTION_TITLE: &str = "Weather Data by Open-Meteo";
 const GEOCODE_STATE: &str = "geocode";
 const FORECAST_STATE: &str = "forecast:";
 const HERE: &str = "Current location";
-const USAGE: &str = "Type weather and a place, such as weather paris, or allow location for local weather.";
+const USAGE: &str = "Type meteo and a place, such as meteo paris, or allow location for local weather.";
 const NOTHING: &str = "Open-Meteo returned nothing.";
 const UNREADABLE: &str = "Open-Meteo sent a forecast Volant could not read.";
 const SEPARATOR: &str = " · ";
@@ -210,7 +210,7 @@ fn rain_chance(percent: i64) -> String {
     format!("{percent}% chance of rain")
 }
 
-/// The place typed after `weather`, without a leading "in", so `weather in tokyo` looks up Tokyo.
+/// The place typed after `meteo`, without a leading "in", so `meteo in tokyo` looks up Tokyo.
 fn place_query(query: &str) -> &str {
     let query = query.trim();
     match query.get(..IN_PREFIX.len()) {
