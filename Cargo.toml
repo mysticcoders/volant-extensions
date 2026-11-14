@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["kit", "case", "characters", "crates", "docker", "encode", "fancytext", "favicon", "fonts", "github", "hackernews", "hash", "hig", "holidays", "homebrew", "lobsters", "maps", "mdn", "pypi", "sfsymbols", "stackoverflow", "status", "svgl", "todoist", "weather", "wordcount"]
+members = ["kit", "case", "characters", "crates", "docker", "encode", "fancytext", "favicon", "fonts", "github", "hackernews", "hash", "hig", "holidays", "homebrew", "lobsters", "maps", "mdn", "pypi", "sfsymbols", "stackoverflow", "status", "svgl", "meteo", "todoist", "wordcount"]
 
 [profile.release]
 opt-level = "s"
