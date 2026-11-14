@@ -1,5 +1,5 @@
 [package]
-name = "volant-weather"
+name = "volant-meteo"
 version = "0.1.0"
 edition = "2021"
 publish = false

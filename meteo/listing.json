@@ -1,0 +1,6 @@
+{
+  "summary": "Open-Meteo's current conditions, hourly strip and 10-day forecast for where you are, or for any place you type.",
+  "publisher": "Mystic Coders",
+  "license": "MIT",
+  "notes": "Weather data by Open-Meteo.com (CC BY 4.0). Type meteo, or meteo and a place. With location allowed, Volant sends Open-Meteo your position rounded to about ten kilometers; meteo and a place name looks the place up instead and needs no location."
+}

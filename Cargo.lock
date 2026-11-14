@@ -254,6 +254,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "volant-meteo"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "volant-extension-kit",
+]
+
+[[package]]
 name = "volant-pypi"
 version = "0.1.0"
 dependencies = [
@@ -300,15 +309,6 @@ dependencies = [
 
 [[package]]
 name = "volant-todoist"
-version = "0.1.0"
-dependencies = [
- "serde",
- "serde_json",
- "volant-extension-kit",
-]
-
-[[package]]
-name = "volant-weather"
 version = "0.1.0"
 dependencies = [
  "serde",
